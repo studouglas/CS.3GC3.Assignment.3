@@ -37,7 +37,6 @@
 /*****************************************
  *    FUNCTION DECLARATIONS
  ****************************************/
-void calculateFPS();
 void drawText();
 void drawAxes();
 
@@ -57,12 +56,6 @@ float scaleFactor = 1;
 
 //light position (modified by WASD & TG)
 float lightPos[4] = {-5,4.5,0.5,1};
-
-//fps global variables
-float fps = 0;
-int frameCount = 0;
-int currentTime = 0;
-int previousTime = 0;
 
 /*****************************************
  * displays all objects
@@ -86,7 +79,6 @@ void display(void) {
     glRotatef(angleAroundOriginX, 1, 0, 0);
     glTranslatef(-10,0,-10);
     
-    calculateFPS();
     drawText();
     drawAxes();
     terrain.drawTerrain();
@@ -133,9 +125,9 @@ void drawText() {
     glDisable(GL_LIGHTING);
     
     //set up string to print
-    char formatStr[] = "Lighting : %s | Shading: %s | Wireframe : %s | FPS: %0.1f";
+    char formatStr[] = "Lighting : %s | Shading: %s | Wireframe : %s";
     char outputStr[100];
-    sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),fps);
+    sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
     
     //display string
     glColor3f(1, 1, 1);
@@ -150,37 +142,6 @@ void drawText() {
     
     if (lighting)
         glEnable(GL_LIGHTING);
-}
-
-
-/*****************************************************
- * calculates fps and updates global variable fps.
- * Code taken from http://mycodelog.com/2010/04/16/fps/
- * and is not my own. I deemed this acceptable as
- * it is for a "bonus" feature, not a core one.
- *****************************************************/
-void calculateFPS() {
-    
-    //increase frame count
-    frameCount++;
-    
-    //get the number of milliseconds since glutInit called
-    currentTime = glutGet(GLUT_ELAPSED_TIME);
-    
-    //calculate time passed
-    int timeInterval = currentTime - previousTime;
-    
-    if (timeInterval > 1000) {
-        
-        //calculate the number of frames per second
-        fps = frameCount / (timeInterval / 1000.0f);
-        
-        //set time
-        previousTime = currentTime;
-        
-        //reset frame count
-        frameCount = 0;
-    }
 }
 
 /********************************************

@@ -71,7 +71,7 @@ void Terrain::generateTerrain() {
     }
     
     //more iterations = more jagged (scales linearly with terrainSize)
-    int iterations = terrainSize+150;
+    int iterations = terrainSize+250;
     
     for (int i = 0; i < iterations; i++) {
     
@@ -84,18 +84,21 @@ void Terrain::generateTerrain() {
         float d = sqrtf(2*(terrainSize*terrainSize));
         float c = ((double) rand() / RAND_MAX) * d - d/2.0;
 
+        float displacement = 0.8;
+        
         //iterate over all points in heightmap
         for (int x = 0; x < terrainSize; x++) {
             for (int z = 0; z < terrainSize; z++) {
                 
                 //increase the height
                 if (a*x + b*z - c > 0)
-                    heightMap[x][z] = heightMap[x][z]+0.8 < MAX_HEIGHT ? heightMap[x][z] += 0.8 : MAX_HEIGHT;
+                    heightMap[x][z] = heightMap[x][z]+displacement < MAX_HEIGHT ? heightMap[x][z] += displacement : MAX_HEIGHT;
                 
                 //decrease the height
                 else
-                    heightMap[x][z] = heightMap[x][z] > 1 ? heightMap[x][z] -= 0.8 : 0.2;
+                    heightMap[x][z] = heightMap[x][z]-displacement > 0.2 ? heightMap[x][z] -= displacement : 0.2;
             }
+            displacement += 0.002;
         }
     }
 }
@@ -112,9 +115,9 @@ void Terrain::drawTerrain() {
     for (int x = 0; x < terrainSize-1; x++) {
         for (int z = 0; z < terrainSize-1; z++) {
             
-            //set colour to white if highest, black if lowest (for no lighting)
-            float colour = (float) heightMap[x][z]/ (float) MAX_HEIGHT;
-            glColor3f(colour, colour, colour);
+            //colour is more white w/ more height, green for wireframe
+            float colour;
+            bool greenColour = false;
             
             //set materials (for lighting)
             float diffuse[4] = {colour,colour,colour, 1.0};
@@ -125,32 +128,44 @@ void Terrain::drawTerrain() {
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
             glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40);
             
-
             //set polygon mode, make wireframes bright green
             if (wireframeMode == SOLID) {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
             else if (wireframeMode == WIREFRAME) {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                glColor3f(0,0.9,0.1);
+                greenColour = true;
             }
             else if (wireframeMode == BOTH) {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                glColor3f(0,0.8,0.1);
+
                 glBegin(GL_QUADS);
                     glVertex3f(x, heightMap[x][z], z);
                     glVertex3f(x+1, heightMap[x+1][z], z);
                     glVertex3f(x+1, heightMap[x+1][z+1], z+1);
                     glVertex3f(x, heightMap[x][z+1], z+1);
                 glEnd();
-                glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-                glColor3f(0,0.9,0.1);
+                
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
             
             //draw the polygons
             glBegin(GL_QUADS);
+                colour = (float) heightMap[x][z]/ (float) MAX_HEIGHT;
+                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                 glVertex3f(x, heightMap[x][z], z);
+                
+                colour = (float) heightMap[x+1][z]/ (float) MAX_HEIGHT;
+                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                 glVertex3f(x+1, heightMap[x+1][z], z);
+                
+                colour = (float) heightMap[x+1][z+1]/ (float) MAX_HEIGHT;
+                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                 glVertex3f(x+1, heightMap[x+1][z+1], z+1);
+                
+                colour = (float) heightMap[x][z+1]/ (float) MAX_HEIGHT;
+                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                 glVertex3f(x, heightMap[x][z+1], z+1);
             glEnd();
 
