@@ -69,6 +69,8 @@ void display(void) {
     glRotatef(angleAroundOriginX, 1, 0, 0);
     glTranslatef(-10,0,-10);
     
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+
     drawText();
     drawAxes();
     terrain.drawTerrain();
@@ -117,8 +119,12 @@ void drawText() {
     //set up string to print
     char formatStr[] = "Lighting : %s | Shading: %s | Wireframe : %s";
     char outputStr[100];
+    #ifdef __APPLE__
     sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
-    
+    #else
+    sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+    #endif
+
     //display string
     glColor3f(1, 1, 1);
     glRasterPos2f(10,10);
