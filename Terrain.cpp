@@ -96,9 +96,9 @@ void Terrain::generateTerrain() {
                 
                 //decrease the height
                 else
-                    heightMap[x][z] = heightMap[x][z]-displacement > 0.2 ? heightMap[x][z] -= displacement : 0.2;
+                    heightMap[x][z] = heightMap[x][z]-displacement > 0 ? heightMap[x][z] -= displacement : 0;
             }
-            displacement += 0.002;
+            displacement += 0.001;
         }
     }
 }

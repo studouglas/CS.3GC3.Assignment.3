@@ -289,7 +289,7 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
-    //glutReshapeFunc(reshapeFunc);
+    glutReshapeFunc(reshapeFunc);
     
     //setting up depth test & lighting normalization
     glEnable(GL_DEPTH_TEST);
