@@ -1,7 +1,7 @@
 /*
  CS 3GC3 Assignment 3
  Stuart Douglas - 1214422
- 
+ Anagh Goswami - 1217426
  November 9th, 2014
  
  main.cpp
