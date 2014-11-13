@@ -8,29 +8,20 @@
  -
 */
 
-#ifndef _OPENGL_
-#define _OPENGL_
+#include "Terrain.h"
+#include <vector>
+#include <stdlib.h>
+#include<math.h>
+
 #ifdef __APPLE__
 #  include <OpenGL/gl.h>
 #  include <OpenGL/glu.h>
 #  include <GLUT/glut.h>
 #else
+#  include <windows.h>
 #  include <GL/gl.h>
 #  include <GL/glu.h>
 #  include <GL/freeglut.h>
-#endif
-#endif
-
-#ifndef _STANDARD_
-#define _STANDARD_
-#include <vector>
-#include <stdlib.h>
-#include<math.h>
-#endif
-
-#ifndef _TERRAIN_
-#define _TERRAIN_
-#include "Terrain.h"
 #endif
 
 
