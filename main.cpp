@@ -117,7 +117,7 @@ void drawText() {
     //set up string to print
     char formatStr[] = "Lighting : %s | Shading: %s | Wireframe : %s";
     char outputStr[100];
-    sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+    sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
     
     //display string
     glColor3f(1, 1, 1);
