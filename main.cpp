@@ -46,7 +46,7 @@ float angleAroundOriginX = 0;
 float scaleFactor = 1;
 
 //light position (modified by WASD & TG)
-float lightPos[4] = {-5,4.5,0.5,1};
+float lightPos[4] = {40,50,40,1};
 
 /*****************************************
  * displays all objects
@@ -65,7 +65,6 @@ void display(void) {
     glPushMatrix();
     glScalef(0.2, 0.2, 0.2);
     glScalef(scaleFactor, scaleFactor, scaleFactor);
-    //glScalef(terrain.scaleFactor,terrain.scaleFactor, terrain.scaleFactor);
     glRotatef(angleAroundOriginY, 0, 1, 0);
     glRotatef(angleAroundOriginX, 1, 0, 0);
     glTranslatef(-10,0,-10);
@@ -148,7 +147,7 @@ void keyboard(unsigned char key, int x, int y) {
             lighting = !lighting;
             if (lighting) {
                 glEnable(GL_LIGHTING);
-                glEnable(GL_CULL_FACE);
+                //glEnable(GL_CULL_FACE);
             }
             else {
                 glDisable(GL_LIGHTING);

@@ -26,7 +26,7 @@
  *    GLOBAL VARIABLES
  ****************************************/
 const float MAX_HEIGHT = 40;
-
+float faceNormals[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE][3];
 
 /*****************************************
  * Constructor
@@ -88,8 +88,44 @@ void Terrain::generateTerrain() {
                 //decrease the height
                 else
                     heightMap[x][z] = heightMap[x][z]-displacement > 0 ? heightMap[x][z] -= displacement : 0;
+                
             }
             displacement += 0.001;
+        }
+        
+        //calculate normals
+        for (int x = 0; x < terrainSize; x++) {
+            for (int z = 0; z < terrainSize; z++) {
+
+                //x, z
+                float t1[3];
+                t1[0] = x; t1[1] = heightMap[x][z]; t1[2] = z;
+                
+                //z + 1, x
+                float t2[3];
+                t2[0] = x; t2[1] = heightMap[x][z+1]; t2[2] = z+1;
+                
+                //x + 1, z
+                float t3[3];
+                t3[0] = x+1; t3[1] = heightMap[x+1][z]; t3[2] = z;
+                
+                
+                
+                float v1[3] = {t2[0]-t1[0], t2[1]-t1[1], t2[2]-t1[2]};
+                float v2[3] = {t3[0]-t1[0], t3[1]-t1[1], t3[2]-t1[2]};
+                
+                float vx = v1[1]*v2[2] - v1[2]*v2[1];
+                float vy = v1[2]*v2[0] - v1[0]*v2[2];
+                float vz = v1[0]*v2[1] - v1[1]*v2[0];
+                float v[3] = {vx, vy, vz};
+                
+                float len = sqrtf(vx*vx + vy*vy + vz*vz);
+                float nv[3] = {v[0]/len, v[1]/len, v[2]/len};
+                
+                faceNormals[x][z][0] = nv[0];
+                faceNormals[x][z][1] = nv[1];
+                faceNormals[x][z][2] = nv[2];
+            }
         }
     }
 }
@@ -107,7 +143,7 @@ void Terrain::drawTerrain() {
         for (int z = 0; z < terrainSize-1; z++) {
             
             //colour is more white w/ more height, green for wireframe
-            float colour;
+            float colour = (float) heightMap[x][z]/ (float) MAX_HEIGHT;;
             bool greenColour = false;
             
             //set materials (for lighting)
@@ -132,9 +168,16 @@ void Terrain::drawTerrain() {
                 glColor3f(0,0.8,0.1);
 
                 glBegin(GL_QUADS);
+                    glNormal3fv(faceNormals[x][z]);
                     glVertex3f(x, heightMap[x][z], z);
+                
+                    glNormal3fv(faceNormals[x+1][z]);
                     glVertex3f(x+1, heightMap[x+1][z], z);
+                
+                    glNormal3fv(faceNormals[x+1][z+1]);
                     glVertex3f(x+1, heightMap[x+1][z+1], z+1);
+                
+                    glNormal3fv(faceNormals[x][z+1]);
                     glVertex3f(x, heightMap[x][z+1], z+1);
                 glEnd();
                 
@@ -145,18 +188,22 @@ void Terrain::drawTerrain() {
             glBegin(GL_QUADS);
                 colour = (float) heightMap[x][z]/ (float) MAX_HEIGHT;
                 greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                glNormal3fv(faceNormals[x][z]);
                 glVertex3f(x, heightMap[x][z], z);
                 
                 colour = (float) heightMap[x+1][z]/ (float) MAX_HEIGHT;
                 greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                glNormal3fv(faceNormals[x+1][z]);
                 glVertex3f(x+1, heightMap[x+1][z], z);
                 
                 colour = (float) heightMap[x+1][z+1]/ (float) MAX_HEIGHT;
                 greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                glNormal3fv(faceNormals[x+1][z+1]);
                 glVertex3f(x+1, heightMap[x+1][z+1], z+1);
                 
                 colour = (float) heightMap[x][z+1]/ (float) MAX_HEIGHT;
                 greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                glNormal3fv(faceNormals[x][z+1]);
                 glVertex3f(x, heightMap[x][z+1], z+1);
             glEnd();
 
