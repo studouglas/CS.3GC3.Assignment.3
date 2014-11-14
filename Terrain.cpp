@@ -155,6 +155,19 @@ void Terrain::drawTerrain() {
             
             //draw the polygons
             glNormal3fv(faceNormals[x][z]);
+            
+            float diffuse[4] = {.7,0,0.2, 1.0};
+            float diffuse1[4] = {0,0,.8, 1};
+            float diffuse2[4] = {1, 1, 1, 1};
+            float ambient[4] = {.7,0,0.2, 1.0};
+            float ambient1[4] = {0,0,.8,1};
+            float ambient2[4] = {1, 1, 1, 1};
+            float specular[4] = {0.1,0.1,0.1, 0.5};
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (heightMap[x][z] <= 4) ? ambient1 : (heightMap[x][z] >= 21) ? ambient2 : ambient);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (heightMap[x][z] <= 4) ? diffuse1 : (heightMap[x][z] >= 21) ? diffuse2 : diffuse);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 2);
+
             glBegin(GL_QUADS);
                 colour = (float) heightMap[x][z]/ (float) MAX_HEIGHT;
                 greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
@@ -192,14 +205,12 @@ void Terrain::calculateVertexNormals() {
             t1[0] = x; t1[1] = heightMap[x][z]; t1[2] = z;
             
             //z + 1, x
-            float t2[3];
-            t2[0] = x+1; t2[1] = heightMap[x+1][z]; t2[2] = z;
+            float t3[3];
+            t3[0] = x+1; t3[1] = heightMap[x+1][z]; t3[2] = z;
             
             //x + 1, z
-            float t3[3];
-            t3[0] = x+1; t3[1] = heightMap[x][z+1]; t3[2] = z+1;
-            
-            
+            float t2[3];
+            t2[0] = x+1; t2[1] = heightMap[x][z+1]; t2[2] = z+1;
             
             float v1[3] = {t2[0]-t1[0], t2[1]-t1[1], t2[2]-t1[2]};
             float v2[3] = {t3[0]-t1[0], t3[1]-t1[1], t3[2]-t1[2]};
