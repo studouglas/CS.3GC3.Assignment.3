@@ -46,7 +46,7 @@ float angleAroundOriginX = 0;
 float scaleFactor = 1;
 
 //light position (modified by WASD & TG)
-float lightPos[4] = {40,50,40,1};
+float lightPos[4] = {50,60,50,1};
 
 /*****************************************
  * displays all objects
@@ -117,8 +117,13 @@ void drawText() {
     //set up string to print
     char formatStr[] = "Lighting : %s | Shading: %s | Wireframe : %s";
     char outputStr[100];
-    sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
     
+    #ifdef __APPLE__
+    sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+    #else
+    sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+    #endif
+
     //display string
     glColor3f(1, 1, 1);
     glRasterPos2f(10,10);
@@ -247,6 +252,7 @@ void init() {
     
     terrain = Terrain(terrainSize);
 
+    glClearColor(0.25, 0.25, 0.25, 1);
     glEnable(GL_LIGHT0);
 
     glMatrixMode(GL_MODELVIEW);
