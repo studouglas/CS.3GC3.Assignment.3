@@ -11,7 +11,7 @@
 #include "Terrain.h"
 #include <vector>
 #include <stdlib.h>
-#include<math.h>
+#include <math.h>
 
 #ifdef __APPLE__
 #  include <OpenGL/gl.h>
