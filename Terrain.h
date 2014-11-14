@@ -9,9 +9,9 @@ class Terrain {
         ****************************************/
         typedef enum {SOLID, WIREFRAME, BOTH} WireframeMode;
     
-        /****************************************
-         *    FUNCTION DECLARATIONS
-         ****************************************/
+        /***************************************
+        *    FUNCTION DECLARATIONS
+        ****************************************/
         Terrain(int size); //constructor
         
         void drawTerrain();
@@ -20,11 +20,11 @@ class Terrain {
         void calculateVertexNormals();
         void calculateFaceNormals();
         char* getWireframeMode();
-        /****************************************
-         *    PUBLIC GLOBAL VARIABLES
-         ****************************************/
-        float heightMap[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE];
-        float scaleFactor = 1.0;
-        int terrainSize = 50;
+    
+        /***************************************
+        *    PUBLIC GLOBAL VARIABLES
+        ****************************************/
         WireframeMode wireframeMode = SOLID;
+        float heightMap[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE];
+        int terrainSize = 100;
 };
