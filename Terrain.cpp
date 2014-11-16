@@ -101,8 +101,8 @@ void Terrain::generateTerrain() {
 void Terrain::drawTerrain() {
     
     //set materials for land, snow and water
-    float diffuse[4] = {0,0.4,0, 1.0};
-    float ambient[4] = {0,0.4,0, 1.0};
+    float diffuse[4] = {0.52,0.26,0.08, 1.0};
+    float ambient[4] = {0.52,0.26,0.08, 1.0};
     float specular[4] = {0.1,0.1,0.1, 0.5};
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
