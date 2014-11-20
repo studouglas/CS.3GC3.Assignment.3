@@ -8,6 +8,7 @@ class Terrain {
         *    CUSTOM STRUCTS
         ****************************************/
         typedef enum {SOLID, WIREFRAME, BOTH} WireframeMode;
+        typedef enum {FAULT, CIRCLE} TerrainAlgorithm;
     
         /***************************************
         *    FUNCTION DECLARATIONS
@@ -17,14 +18,17 @@ class Terrain {
         void drawTerrain();
         void generateTerrain();
         void changeWireframeMode();
+        void changeTerrainAlgorithm(TerrainAlgorithm);
         void calculateVertexNormals();
         void calculateFaceNormals();
         char* getWireframeMode();
+    
     
         /***************************************
         *    PUBLIC GLOBAL VARIABLES
         ****************************************/
         WireframeMode wireframeMode = SOLID;
+        TerrainAlgorithm terrainAlgorithm = FAULT;
         float heightMap[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE];
         int terrainSize = 100;
 };

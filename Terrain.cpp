@@ -35,11 +35,12 @@ float faceNormals[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE][3];
 Terrain::Terrain(int size) {
 
     //normalize size to acceptable value
-    terrainSize = size;
     if (size < 50)
         terrainSize = 50;
-    else if (size > MAX_TERRAIN_SIZE)
+    if (size > MAX_TERRAIN_SIZE)
         terrainSize = MAX_TERRAIN_SIZE;
+    else
+        terrainSize = size;
     
     //make the terrain
     generateTerrain();
@@ -54,43 +55,82 @@ void Terrain::generateTerrain() {
     //reset heightmap
     for (int x = 0; x < MAX_TERRAIN_SIZE; x++) {
         for (int z = 0; z < MAX_TERRAIN_SIZE; z++) {
-            heightMap[x][z] = 10;
+            heightMap[x][z] = 0;
         }
     }
-    
-    //more iterations = more jagged (scales linearly with terrainSize)
-    int iterations = terrainSize+250;
-    
-    for (int i = 0; i < iterations; i++) {
-    
-        //the following code (until the end of the method) taken from
-        //www.lighthouse3d.com/opengl/terrain/index.php?impdetails
-        //(the website linked in the assignment)
-        float v = rand();
-        float a = sinf(v);
-        float b = cosf(v);
-        float d = sqrtf(2*(terrainSize*terrainSize));
-        float c = ((double) rand() / RAND_MAX) * d - d/2.0;
 
-        float displacement = 0.8;
+    //the following algorithm was taken from
+    //www.lighthouse3d.com/opengl/terrain/index.php?circles
+    //(the website linked in the assignment)
+    if (terrainAlgorithm == CIRCLE) {
         
-        //iterate over all points in heightmap
-        for (int x = 0; x < terrainSize; x++) {
-            for (int z = 0; z < terrainSize; z++) {
-                
-                //increase the height
-                if (a*x + b*z - c > 0)
-                    heightMap[x][z] = heightMap[x][z]+displacement < MAX_HEIGHT ? heightMap[x][z] += displacement : MAX_HEIGHT;
-                
-                //decrease the height
-                else
-                    heightMap[x][z] = heightMap[x][z]-displacement > 0 ? heightMap[x][z] -= displacement : 0;
-                
-            }
+        //these values all depend on the terrain size (big terrain needs more circles)
+        int iterations = terrainSize*3 + 600;
+        float displacement = 2 + 2*(terrainSize/100.0);
+        float terrainCircleRadius = 10 + 5*(terrainSize/100.0);
 
+        //choose a circle, raise points in it
+        for (int i = 0; i < iterations; i++) {
+            
+            //choose random point
+            float randX = ((double) rand() / RAND_MAX) * terrainSize;
+            float randZ = ((double) rand() / RAND_MAX) * terrainSize;
+            
+            //check all points in circle, raise them appropriately
+            for (int x = randX-terrainCircleRadius; x <= randX+terrainCircleRadius; x++) {
+                for (int z = randZ-terrainCircleRadius; z <= randZ+terrainCircleRadius; z++) {
+                    
+                    //if our point in terrain, raise it
+                    if (x >= 0 && x < terrainSize && z >= 0 && z < terrainSize) {
+
+                        //determine distance to circle w/ distance algorithm
+                        float pointDist = sqrtf(((x-randX)*(x-randX) + (z-randZ)*(z-randZ)))*2.0/terrainCircleRadius;
+
+                        if (fabs(pointDist) <= 1.0)
+                            heightMap[x][z] += displacement/2.0 + cosf(pointDist*3.14)*displacement/2.0;
+                    }
+                }
+            }
+            displacement = displacement >= 0.06 ? displacement-0.01 : 0.05;
         }
-        displacement += 0.01;
     }
+
+    else {
+
+        //more iterations = more jagged (scales linearly with terrainSize)
+        int iterations = terrainSize+350;
+        float displacement = 1;
+
+        for (int i = 0; i < iterations; i++) {
+            
+            //choose random line
+            int v = rand();
+            float a = sinf(v);
+            float b = cosf(v);
+            float d = sqrtf(2.0*(terrainSize*terrainSize));
+            float c = ((double) rand()/RAND_MAX) * d - d/2.0;
+            
+            //iterate over all points in heightmap
+            for (int x = 0; x < terrainSize; x++) {
+                for (int z = 0; z < terrainSize; z++) {
+
+                    //increase the height
+                    if (a*x + b*z - c > 0) {
+                        float deltaY = displacement * ((a*x+b*z-c > 1.57) ? 1 : sinf(a*x + b*z - c));
+                        heightMap[x][z] = heightMap[x][z]+deltaY < MAX_HEIGHT ? heightMap[x][z] += deltaY : MAX_HEIGHT;
+                    }
+                    //decrease the height
+                    else {
+                        float deltaY = displacement * ((a*x+b*z-c < -1.57) ? 1 : sinf(a*x + b*z - c));
+                        heightMap[x][z] = heightMap[x][z]-deltaY > 0 ? heightMap[x][z] -= deltaY : 0;
+                    }
+                }
+
+            }
+            displacement = displacement > 0.2 ? displacement-0.001 : 0.2;
+        }
+    }
+    
     calculateVertexNormals();
     calculateFaceNormals();
 }
@@ -100,7 +140,7 @@ void Terrain::generateTerrain() {
  ****************************************/
 void Terrain::drawTerrain() {
     
-    //set materials for land, snow and water
+    //set materials for land
     float diffuse[4] = {0.52,0.26,0.08, 1.0};
     float ambient[4] = {0.52,0.26,0.08, 1.0};
     float specular[4] = {0.1,0.1,0.1, 0.5};
@@ -117,14 +157,14 @@ void Terrain::drawTerrain() {
             float colour;
             bool drawingWireframe = false;
             
-            //set snow and water materials
-            if (heightMap[x][z] <= 4) {
+            //set snow and water materials (it looks dumb with the circle algorithm so we disable it)
+            if (heightMap[x][z] <= 4 && terrainAlgorithm != CIRCLE) {
                 float diffuseWater[4] = {0,0,0.8, 1};
                 float ambientWater[4] = {0,0,0.8, 1};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientWater);
                 glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseWater);
             }
-            else if (heightMap[x][z] >= 21) {
+            else if (heightMap[x][z] >= 21 && terrainAlgorithm != CIRCLE) {
                 float diffuseSnow[4] = {1,1,1, 1};
                 float ambientSnow[4] = {1,1,1, 1};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientSnow);
@@ -145,6 +185,7 @@ void Terrain::drawTerrain() {
             }
             
             glNormal3fv(faceNormals[x][z]);
+            float terrainOffset = terrainSize/2.0;
             
             //draw the quad (twice if both is wireframe mode)
             for (int i = 0; i < 2; i++) {
@@ -153,22 +194,22 @@ void Terrain::drawTerrain() {
                     colour = (float) heightMap[x][z]/ (float) MAX_HEIGHT;
                     drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                     glNormal3fv(vertexNormals[x][z]);
-                    glVertex3f(x, heightMap[x][z], z);
+                    glVertex3f(x-terrainOffset, heightMap[x][z], z-terrainOffset);
                 
                     colour = (float) heightMap[x][z+1]/ (float) MAX_HEIGHT;
                     drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                     glNormal3fv(vertexNormals[x][z+1]);
-                    glVertex3f(x, heightMap[x][z+1], z+1);
+                    glVertex3f(x-terrainOffset, heightMap[x][z+1], z+1-terrainOffset);
                     
                     colour = (float) heightMap[x+1][z+1]/ (float) MAX_HEIGHT;
                     drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                     glNormal3fv(vertexNormals[x+1][z+1]);
-                    glVertex3f(x+1, heightMap[x+1][z+1], z+1);
+                    glVertex3f(x+1-terrainOffset, heightMap[x+1][z+1], z+1-terrainOffset);
              
                     colour = (float) heightMap[x+1][z]/ (float) MAX_HEIGHT;
                     drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                     glNormal3fv(vertexNormals[x+1][z]);
-                    glVertex3f(x+1, heightMap[x+1][z], z);
+                    glVertex3f(x+1-terrainOffset, heightMap[x+1][z], z-terrainOffset);
                 glEnd();
                 
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -284,6 +325,14 @@ void Terrain::changeWireframeMode() {
         wireframeMode = BOTH;
     else if (wireframeMode == BOTH)
         wireframeMode = SOLID;
+}
+
+/*****************************************
+ * Toggles through the 3 wireframe modes.
+ *****************************************/
+void Terrain::changeTerrainAlgorithm(TerrainAlgorithm algorithm) {
+    terrainAlgorithm = algorithm;
+    generateTerrain();
 }
 
 /*****************************************

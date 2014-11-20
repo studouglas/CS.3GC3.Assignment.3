@@ -40,8 +40,7 @@ bool lighting = true;
 bool gouraudShading = true;
 
 //camera (modified by arrow keys)
-float camPos[3] = {-20,60,-20};
-float camCenter[3] = {0,0,0};
+float camPos[3] = {-100,60,-100};
 
 //light position (modified by WASD & TG)
 float lightPos[4];
@@ -57,9 +56,26 @@ void display(void) {
     glLoadIdentity();
     
     //point camera
-    gluLookAt(camPos[0],camPos[1],camPos[2], camCenter[0],0,camCenter[2], 0,1,0);
+    gluLookAt(camPos[0],camPos[1],camPos[2], 0,0,0, 0,1,0);
     
     drawText();
+//    glDisable(GL_LIGHTING);
+//    glColor3f(1, 0, 0);
+//    glBegin(GL_LINES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(300, 0, 0);
+//    glEnd();
+//    glColor3f(0, 1, 0);
+//    glBegin(GL_LINES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(0, 300, 0);
+//    glEnd();
+//    glColor3f(0, 0, 1);
+//    glBegin(GL_LINES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(0, 0, 300);
+//    glEnd();
+//    glEnable(GL_LIGHTING);
     terrain.drawTerrain();
     
     glutSwapBuffers();
@@ -138,7 +154,15 @@ void keyboard(unsigned char key, int x, int y) {
         case ']':
             camPos[2] += 1;
             break;
-        
+
+        //change algorithms
+        case '1':
+            terrain.changeTerrainAlgorithm(Terrain::FAULT);
+            break;
+        case '2':
+            terrain.changeTerrainAlgorithm(Terrain::CIRCLE);
+            break;
+            
         //reset
         case 'r':
         case 'R':
@@ -237,10 +261,10 @@ void init() {
     lightPos[1] = 80;
     lightPos[2] = (float) terrain.terrainSize/2.0;
     lightPos[3] = 1.0;
-
-    //set cam centre position
-    camCenter[0] = (float) terrain.terrainSize/2.0;
-    camCenter[2] = (float) terrain.terrainSize/2.0;
+    
+    //set camera pos
+    camPos[0] = -terrain.terrainSize + terrain.terrainSize/4;
+    camPos[2] = -terrain.terrainSize + terrain.terrainSize/4;
     
     //set backrgound to dark gray
     glClearColor(0.25, 0.25, 0.25, 1);
