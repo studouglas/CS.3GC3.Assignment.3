@@ -17,6 +17,7 @@ class Terrain {
         
         void drawTerrain();
         void generateTerrain();
+        void smoothTerrain(float);
         void changeWireframeMode();
         void changeTerrainAlgorithm(TerrainAlgorithm);
         void calculateVertexNormals();

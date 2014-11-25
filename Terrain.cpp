@@ -48,22 +48,23 @@ Terrain::Terrain(int size) {
 }
 
 /*****************************************
- * Initializes heightMap with heights
- * as per line cutting algorithm
+ * Initializes heightMap with heights as
+ * per line cutting & circles algorithms
  ****************************************/
 void Terrain::generateTerrain() {
 
     //reset heightmap
+    maxTerrainHeightValue = 0;
     for (int x = 0; x < MAX_TERRAIN_SIZE; x++) {
         for (int z = 0; z < MAX_TERRAIN_SIZE; z++) {
             heightMap[x][z] = 0;
         }
     }
-    maxTerrainHeightValue = 0;
 
-    //the following algorithm was taken from
-    //www.lighthouse3d.com/opengl/terrain/index.php?circles
+    //the following algorithms use code from
+    //www.lighthouse3d.com/opengl/terrain/index.php
     //(the website linked in the assignment)
+    
     if (terrainAlgorithm == CIRCLE) {
         
         //these values all depend on the terrain size (big terrain needs more circles)
@@ -103,9 +104,6 @@ void Terrain::generateTerrain() {
     //line fault algorithm
     else {
 
-        //the following algorithm was taken from
-        //www.lighthouse3d.com/opengl/terrain/index.php?impdetails
-        //(the website linked in the assignment)
         int iterations = (terrainSize*terrainSize*terrainSize)/10000+200, v;
         float displacement = 1, a, b, c, d;
 
@@ -137,10 +135,41 @@ void Terrain::generateTerrain() {
             }
             displacement = displacement > 0.2 ? displacement-0.001 : 0.2;
         }
+        smoothTerrain(0.5);
     }
     
     calculateVertexNormals();
     calculateFaceNormals();
+}
+
+
+/*****************************************
+ * Smooths out the rough terrain using
+ * algorithm from:
+ * www.lighthouse3d.com/opengl/terrain/index.php3?smoothing
+ ****************************************/
+void Terrain::smoothTerrain(float smooth) {
+
+    //rows, left to right
+    for (int x = 1; x < terrainSize; x++)
+        for (int z = 0; z < terrainSize; z++)
+            heightMap[x][z] = heightMap[x-1][z]*smooth + heightMap[x][z]*(1-smooth);
+
+    //rows, right to left
+    for (int x = terrainSize-2; x > -1; x--)
+        for (int z = 0; z < terrainSize; z++)
+            heightMap[x][z] = heightMap[x+1][z]*smooth + heightMap[x][z]*(1-smooth);
+
+    //columns, bottom to top
+    for (int x = 0; x < terrainSize; x++)
+        for (int z = 1; z < terrainSize; z++)
+            heightMap[x][z] = heightMap[x][z-1]*smooth + heightMap[x][z]*(1-smooth);
+
+    //columns, top to bottom
+    for (int x = 0; x < terrainSize; x++)
+        for (int z = terrainSize; z > -1; z--)
+            heightMap[x][z] = heightMap[x][z+1]*smooth + heightMap[x][z]*(1-smooth);
+
 }
 
 /*****************************************
