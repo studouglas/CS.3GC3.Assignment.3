@@ -62,23 +62,24 @@ void display(void) {
     gluLookAt(camPos[0],camPos[1],camPos[2], 0,0,0, 0,1,0);
     
     drawText();
-//    glDisable(GL_LIGHTING);
-//    glColor3f(1, 0, 0);
-//    glBegin(GL_LINES);
-//    glVertex3f(0, 0, 0);
-//    glVertex3f(300, 0, 0);
-//    glEnd();
-//    glColor3f(0, 1, 0);
-//    glBegin(GL_LINES);
-//    glVertex3f(0, 0, 0);
-//    glVertex3f(0, 300, 0);
-//    glEnd();
-//    glColor3f(0, 0, 1);
-//    glBegin(GL_LINES);
-//    glVertex3f(0, 0, 0);
-//    glVertex3f(0, 0, 300);
-//    glEnd();
-//    glEnable(GL_LIGHTING);
+    glDisable(GL_LIGHTING);
+    glColor3f(1, 0, 0);
+    glBegin(GL_LINES);
+    glVertex3f(0, 0, 0);
+    glVertex3f(300, 0, 0);
+    glEnd();
+    glColor3f(0, 1, 0);
+    glBegin(GL_LINES);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 300, 0);
+    glEnd();
+    glColor3f(0, 0, 1);
+    glBegin(GL_LINES);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, 0, 300);
+    glEnd();
+    if (lighting)
+        glEnable(GL_LIGHTING);
     terrain.drawTerrain();
     
     glutSwapBuffers();
@@ -253,7 +254,7 @@ void reshapeFunc(int w, int h) {
 void init() {
     
     //get terrain size
-    int terrainSize = 150;
+    int terrainSize = 100;
     printf("Enter terrain size (min 50, max 300):\n");
 //    scanf("%d",&terrainSize);
 

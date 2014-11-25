@@ -57,7 +57,7 @@ void Terrain::generateTerrain() {
     maxTerrainHeightValue = 0;
     for (int x = 0; x < MAX_TERRAIN_SIZE; x++) {
         for (int z = 0; z < MAX_TERRAIN_SIZE; z++) {
-            heightMap[x][z] = 0;
+            heightMap[x][z] = 10;
         }
     }
 
@@ -105,7 +105,7 @@ void Terrain::generateTerrain() {
     else {
 
         int iterations = (terrainSize*terrainSize*terrainSize)/10000+200, v;
-        float displacement = 1, a, b, c, d;
+        float displacement = 1.2, a, b, c, d;
 
         for (int i = 0; i < iterations; i++) {
             
@@ -121,7 +121,7 @@ void Terrain::generateTerrain() {
                 for (int z = 0; z < terrainSize; z++) {
 
                     //increase the height
-                    if (a*x + b*z - c > 0) {
+                    if (a*x + b*z - c < 0) {
                         heightMap[x][z] = heightMap[x][z]+displacement < MAX_HEIGHT ? heightMap[x][z] += displacement : MAX_HEIGHT;
                         if (heightMap[x][z] > maxTerrainHeightValue)
                             maxTerrainHeightValue = heightMap[x][z];
@@ -135,7 +135,7 @@ void Terrain::generateTerrain() {
             }
             displacement = displacement > 0.2 ? displacement-0.001 : 0.2;
         }
-        smoothTerrain(0.5);
+        smoothTerrain(terrainSize/600.0+0.1);
     }
     
     calculateVertexNormals();
@@ -150,6 +150,11 @@ void Terrain::generateTerrain() {
  ****************************************/
 void Terrain::smoothTerrain(float smooth) {
 
+    if (smooth < 0)
+        smooth = 0;
+    if (smooth > 0.9)
+        smooth = 0.9;
+    
     //rows, left to right
     for (int x = 1; x < terrainSize; x++)
         for (int z = 0; z < terrainSize; z++)
@@ -167,7 +172,7 @@ void Terrain::smoothTerrain(float smooth) {
 
     //columns, top to bottom
     for (int x = 0; x < terrainSize; x++)
-        for (int z = terrainSize; z > -1; z--)
+        for (int z = terrainSize-2; z > -1; z--)
             heightMap[x][z] = heightMap[x][z+1]*smooth + heightMap[x][z]*(1-smooth);
 
 }
@@ -384,5 +389,4 @@ char* Terrain::getWireframeMode() {
         return (char*) "WIREFRAME";
     else
         return (char*) "BOTH";
-
 }
