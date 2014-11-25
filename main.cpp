@@ -8,6 +8,7 @@
  -
 */
 
+#include "Character.h"
 #include "Terrain.h"
 #include <vector>
 #include <stdlib.h>
@@ -34,6 +35,7 @@ void drawText();
  *    GLOBAL VARIABLES
  ****************************************/
 Terrain terrain = NULL;
+Character character;
 
 //state (modified by key presses)
 bool lighting = true;
@@ -254,12 +256,13 @@ void reshapeFunc(int w, int h) {
 void init() {
     
     //get terrain size
-    int terrainSize = 100;
+    int terrainSize = 50;
     printf("Enter terrain size (min 50, max 300):\n");
 //    scanf("%d",&terrainSize);
 
     //initialize terrain
     terrain = Terrain(terrainSize);
+    character = Character();
     
     //put light 1 in middle of terrain
     light1Pos[0] = (float) terrain.terrainSize/2.0;
@@ -293,6 +296,13 @@ void init() {
     gluPerspective(45,(GLfloat) glutGet(GLUT_WINDOW_WIDTH) / (GLfloat) glutGet(GLUT_WINDOW_HEIGHT), 1, 100);
 }
 
+void timerFunc(int value) {
+    character.move();
+    
+    glutTimerFunc(32, timerFunc, 0);
+    glutPostRedisplay();
+}
+
 /****************************************
 * program start point 
 ****************************************/
@@ -306,18 +316,19 @@ int main(int argc, char** argv) {
     glutInitWindowSize(600, 600);
     glutInitWindowPosition(10, 10);
     glutCreateWindow("Terrain Generator");
+
+    //initializing variables
+    init();
     
     //registering callbacks
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
+    glutTimerFunc(32, timerFunc, 0);
     glutReshapeFunc(reshapeFunc);
     
     //setting up depth test
     glEnable(GL_DEPTH_TEST);
-    
-    //initializing variables
-    init();
     
     //start event loop
     glutMainLoop();
