@@ -43,7 +43,10 @@ bool gouraudShading = true;
 float camPos[3] = {-100,60,-100};
 
 //light position (modified by WASD & TG)
-float lightPos[4];
+float light1Pos[4];
+float light2Pos[4];
+
+
 
 /*****************************************
  * displays all objects
@@ -105,10 +108,11 @@ void drawText() {
     char formatStr[] = "Lighting : %s | Shading: %s | Wireframe : %s";
     char outputStr[100];
     
+    //for some reason sprintf requires the _s in windows
     #ifdef __APPLE__
-    sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+        sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
     #else
-    sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+        sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
     #endif
 
     //display string
@@ -139,7 +143,7 @@ void keyboard(unsigned char key, int x, int y) {
             lighting = !lighting;
             if (lighting) {
                 glEnable(GL_LIGHTING);
-                //glEnable(GL_CULL_FACE);
+                glEnable(GL_CULL_FACE);
             }
             else {
                 glDisable(GL_LIGHTING);
@@ -249,18 +253,24 @@ void reshapeFunc(int w, int h) {
 void init() {
     
     //get terrain size
-    int terrainSize = 100;
+    int terrainSize = 150;
     printf("Enter terrain size (min 50, max 300):\n");
-    scanf("%d",&terrainSize);
-    
+//    scanf("%d",&terrainSize);
+
     //initialize terrain
     terrain = Terrain(terrainSize);
     
-    //put light in middle of terrain
-    lightPos[0] = (float) terrain.terrainSize/2.0;
-    lightPos[1] = 80;
-    lightPos[2] = (float) terrain.terrainSize/2.0;
-    lightPos[3] = 1.0;
+    //put light 1 in middle of terrain
+    light1Pos[0] = (float) terrain.terrainSize/2.0;
+    light1Pos[1] = 80;
+    light1Pos[2] = (float) terrain.terrainSize/2.0;
+    light1Pos[3] = 1.0;
+    
+    //put light 2 at origin
+    light2Pos[0] = 0;
+    light2Pos[1] = 80;
+    light2Pos[2] = 0;
+    light2Pos[3] = 1.0;
     
     //set camera pos
     camPos[0] = -terrain.terrainSize + terrain.terrainSize/4;
@@ -269,9 +279,12 @@ void init() {
     //set backrgound to dark gray
     glClearColor(0.25, 0.25, 0.25, 1);
 
-    //turn on lighting
+    //turn on lighting & back-face culling
+    glEnable(GL_CULL_FACE);
     glEnable(GL_LIGHT0);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glLightfv(GL_LIGHT0, GL_POSITION, light1Pos);
+    glEnable(GL_LIGHT1);
+    glLightfv(GL_LIGHT1, GL_POSITION, light2Pos);
 
     //set projection matrix, using perspective w/ correct aspect ratio
     glMatrixMode(GL_PROJECTION);
@@ -299,7 +312,7 @@ int main(int argc, char** argv) {
     glutSpecialFunc(special);
     glutReshapeFunc(reshapeFunc);
     
-    //setting up depth test & lighting normalization
+    //setting up depth test
     glEnable(GL_DEPTH_TEST);
     
     //initializing variables

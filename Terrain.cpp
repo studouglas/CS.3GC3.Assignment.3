@@ -28,6 +28,7 @@
 const float MAX_HEIGHT = 40;
 float vertexNormals[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE][3];
 float faceNormals[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE][3];
+float maxTerrainHeightValue = 0;
 
 /*****************************************
  * Constructor
@@ -58,6 +59,7 @@ void Terrain::generateTerrain() {
             heightMap[x][z] = 0;
         }
     }
+    maxTerrainHeightValue = 0;
 
     //the following algorithm was taken from
     //www.lighthouse3d.com/opengl/terrain/index.php?circles
@@ -66,7 +68,7 @@ void Terrain::generateTerrain() {
         
         //these values all depend on the terrain size (big terrain needs more circles)
         int iterations = terrainSize*3 + 600;
-        float displacement = 2 + 2*(terrainSize/100.0);
+        float displacement = 2 + 3*(terrainSize/100.0);
         float terrainCircleRadius = 10 + 5*(terrainSize/100.0);
 
         //choose a circle, raise points in it
@@ -88,6 +90,9 @@ void Terrain::generateTerrain() {
 
                         if (fabs(pointDist) <= 1.0)
                             heightMap[x][z] += displacement/2.0 + cosf(pointDist*3.14)*displacement/2.0;
+                        
+                        if (heightMap[x][z] > maxTerrainHeightValue)
+                            maxTerrainHeightValue = heightMap[x][z];
                     }
                 }
             }
@@ -95,20 +100,23 @@ void Terrain::generateTerrain() {
         }
     }
 
+    //line fault algorithm
     else {
 
-        //more iterations = more jagged (scales linearly with terrainSize)
-        int iterations = terrainSize+350;
-        float displacement = 1;
+        //the following algorithm was taken from
+        //www.lighthouse3d.com/opengl/terrain/index.php?impdetails
+        //(the website linked in the assignment)
+        int iterations = (terrainSize*terrainSize*terrainSize)/10000+200, v;
+        float displacement = 1, a, b, c, d;
 
         for (int i = 0; i < iterations; i++) {
             
             //choose random line
-            int v = rand();
-            float a = sinf(v);
-            float b = cosf(v);
-            float d = sqrtf(2.0*(terrainSize*terrainSize));
-            float c = ((double) rand()/RAND_MAX) * d - d/2.0;
+            v = rand();
+            a = sinf(v);
+            b = cosf(v);
+            d = sqrtf(2.0*(terrainSize*terrainSize));
+            c = ((double) rand()/RAND_MAX) * d - d/2.0;
             
             //iterate over all points in heightmap
             for (int x = 0; x < terrainSize; x++) {
@@ -116,14 +124,14 @@ void Terrain::generateTerrain() {
 
                     //increase the height
                     if (a*x + b*z - c > 0) {
-                        float deltaY = displacement * ((a*x+b*z-c > 1.57) ? 1 : sinf(a*x + b*z - c));
-                        heightMap[x][z] = heightMap[x][z]+deltaY < MAX_HEIGHT ? heightMap[x][z] += deltaY : MAX_HEIGHT;
+                        heightMap[x][z] = heightMap[x][z]+displacement < MAX_HEIGHT ? heightMap[x][z] += displacement : MAX_HEIGHT;
+                        if (heightMap[x][z] > maxTerrainHeightValue)
+                            maxTerrainHeightValue = heightMap[x][z];
                     }
+                    
                     //decrease the height
-                    else {
-                        float deltaY = displacement * ((a*x+b*z-c < -1.57) ? 1 : sinf(a*x + b*z - c));
-                        heightMap[x][z] = heightMap[x][z]-deltaY > 0 ? heightMap[x][z] -= deltaY : 0;
-                    }
+                    else
+                        heightMap[x][z] = heightMap[x][z]-displacement > 0 ? heightMap[x][z] -= displacement : 0;
                 }
 
             }
@@ -140,12 +148,7 @@ void Terrain::generateTerrain() {
  ****************************************/
 void Terrain::drawTerrain() {
     
-    //set materials for land
-    float diffuse[4] = {0.52,0.26,0.08, 1.0};
-    float ambient[4] = {0.52,0.26,0.08, 1.0};
     float specular[4] = {0.1,0.1,0.1, 0.5};
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 2);
     
@@ -158,17 +161,29 @@ void Terrain::drawTerrain() {
             bool drawingWireframe = false;
             
             //set snow and water materials (it looks dumb with the circle algorithm so we disable it)
-            if (heightMap[x][z] <= 4 && terrainAlgorithm != CIRCLE) {
+            if (heightMap[x][z] <= 4){// && terrainAlgorithm != CIRCLE) {
                 float diffuseWater[4] = {0,0,0.8, 1};
                 float ambientWater[4] = {0,0,0.8, 1};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientWater);
                 glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseWater);
             }
-            else if (heightMap[x][z] >= 21 && terrainAlgorithm != CIRCLE) {
+            else if (heightMap[x][z] > 4 && heightMap[x][z] <= 8 ){//&& terrainAlgorithm != CIRCLE) {
+                float diffuseGrass[4] = {0,0.3,0.2, 1};
+                float ambientGrass[4] = {0, 0.3, 0.2, 1};
+                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientGrass);
+                glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseGrass);
+            }
+            else if (heightMap[x][z] >= 21 ){//&& terrainAlgorithm != CIRCLE) {
                 float diffuseSnow[4] = {1,1,1, 1};
                 float ambientSnow[4] = {1,1,1, 1};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientSnow);
                 glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseSnow);
+            }
+            else {
+                float diffuseDefault[4] = {0.52,0.26,0.08, 1.0};
+                float ambientDefault[4] = {0.52,0.26,0.08, 1.0};
+                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientDefault);
+                glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseDefault);
             }
 
             //set polygon mode, make wireframes bright green if no lighting
@@ -191,22 +206,22 @@ void Terrain::drawTerrain() {
             for (int i = 0; i < 2; i++) {
                 
                 glBegin(GL_QUADS);
-                    colour = (float) heightMap[x][z]/ (float) MAX_HEIGHT;
+                    colour = (float) heightMap[x][z]/ (float) maxTerrainHeightValue;
                     drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                     glNormal3fv(vertexNormals[x][z]);
                     glVertex3f(x-terrainOffset, heightMap[x][z], z-terrainOffset);
                 
-                    colour = (float) heightMap[x][z+1]/ (float) MAX_HEIGHT;
+                    colour = (float) heightMap[x][z+1]/ (float) maxTerrainHeightValue;
                     drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                     glNormal3fv(vertexNormals[x][z+1]);
                     glVertex3f(x-terrainOffset, heightMap[x][z+1], z+1-terrainOffset);
                     
-                    colour = (float) heightMap[x+1][z+1]/ (float) MAX_HEIGHT;
+                    colour = (float) heightMap[x+1][z+1]/ (float) maxTerrainHeightValue;
                     drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                     glNormal3fv(vertexNormals[x+1][z+1]);
                     glVertex3f(x+1-terrainOffset, heightMap[x+1][z+1], z+1-terrainOffset);
              
-                    colour = (float) heightMap[x+1][z]/ (float) MAX_HEIGHT;
+                    colour = (float) heightMap[x+1][z]/ (float) maxTerrainHeightValue;
                     drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
                     glNormal3fv(vertexNormals[x+1][z]);
                     glVertex3f(x+1-terrainOffset, heightMap[x+1][z], z-terrainOffset);
@@ -218,70 +233,6 @@ void Terrain::drawTerrain() {
                     break;
             }
             
-<<<<<<< HEAD
-            //reset material if snow or water just drawn
-            if (heightMap[x][z] <= 4 || heightMap[x][z] >= 21) {
-                glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
-                glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
-            }
-=======
-            //draw the polygons
-            glNormal3fv(faceNormals[x][z]);
-            
-			float diffuse[4] = { .7, 0, 0.2, 1.0 };
-			float grassdiff1[4] = { 0, 0.3, 0.2, 1 };
-			float snowdiff[4] = { 1, 1, 1, 1 };
-			float waterdiff2[4] = { 0, 0, 0.5, 1.0 };
-			float ambient[4] = { .7, 0, 0.2, 1.0 };
-			float grassambi1[4] = { 0, 1, 0.5, 1 };
-			float snowambi[4] = { 1, 1, 1, 1 };
-			float waterambi2[4] = { 0, 0, 0.7, 1 };
-			float specular[4] = { 0.1, 0.1, 0.1, 0.5 };
-			if (heightMap[x][z] >= 25){
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, snowambi);
-				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, snowdiff);
-			}
-			if (heightMap[x][z] < 25 && heightMap[x][z] > 6){
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
-				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
-			}
-			if (heightMap[x][z] <= 6 && heightMap[x][z] > 5){
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, grassambi1);
-				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, grassdiff1);
-			}
-			if (heightMap[x][z] <= 5){
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, waterambi2);
-				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, waterdiff2);
-			}
-			//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (heightMap[x][z] <= 6) ? ambient3 : (heightMap[x][z] <= 4) ? ambient1 : (heightMap[x][z] >= 21) ? ambient2 : ambient);
-			//glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (heightMap[x][z] <= 6) ? diffuse3 : (heightMap[x][z] <= 4) ? diffuse1 : (heightMap[x][z] >= 21) ? diffuse2 : diffuse);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 2);
-
-
-            glBegin(GL_QUADS);
-                colour = (float) heightMap[x][z]/ (float) MAX_HEIGHT;
-                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
-                glNormal3fv(vertexNormals[x][z]);
-                glVertex3f(x, heightMap[x][z], z);
-            
-                colour = (float) heightMap[x][z+1]/ (float) MAX_HEIGHT;
-                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
-                glNormal3fv(vertexNormals[x][z+1]);
-                glVertex3f(x, heightMap[x][z+1], z+1);
-                
-                colour = (float) heightMap[x+1][z+1]/ (float) MAX_HEIGHT;
-                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
-                glNormal3fv(vertexNormals[x+1][z+1]);
-                glVertex3f(x+1, heightMap[x+1][z+1], z+1);
-         
-                colour = (float) heightMap[x+1][z]/ (float) MAX_HEIGHT;
-                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
-                glNormal3fv(vertexNormals[x+1][z]);
-                glVertex3f(x+1, heightMap[x+1][z], z);
-            glEnd();
-
->>>>>>> Anagh
         }
     }
 }
