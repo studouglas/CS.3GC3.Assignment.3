@@ -29,7 +29,6 @@
  *    FUNCTION DECLARATIONS
  ****************************************/
 void drawText();
-void drawAxes();
 
 /*****************************************
  *    GLOBAL VARIABLES
@@ -41,13 +40,10 @@ bool lighting = true;
 bool gouraudShading = true;
 
 //camera (modified by arrow keys)
-float angleAroundOriginY = 220;
-float angleAroundOriginX = 0;
-float scaleFactor = 1;
+float camPos[3] = {-100,60,-100};
 
 //light position (modified by WASD & TG)
-float lightPos[4] = {-10,-40,-10,1};
-float camPos[3] = {-20,50,-20};
+float lightPos[4];
 
 /*****************************************
  * displays all objects
@@ -60,41 +56,31 @@ void display(void) {
     glLoadIdentity();
     
     //point camera
-    gluLookAt(camPos[0],camPos[1],camPos[2], 40,0,40, 0,1,0);
-    
-    //apply transformations (from arrow key presses)
-//    glPushMatrix();
-    //glScalef(0.2, 0.2, 0.2);
-//    glScalef(scaleFactor, scaleFactor, scaleFactor);
-//    glRotatef(angleAroundOriginY, 0, 1, 0);
-//    glRotatef(angleAroundOriginX, 1, 0, 0);
-//    glTranslatef(-10,0,-10);
+    gluLookAt(camPos[0],camPos[1],camPos[2], 0,0,0, 0,1,0);
     
     drawText();
-    drawAxes();
+//    glDisable(GL_LIGHTING);
+//    glColor3f(1, 0, 0);
+//    glBegin(GL_LINES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(300, 0, 0);
+//    glEnd();
+//    glColor3f(0, 1, 0);
+//    glBegin(GL_LINES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(0, 300, 0);
+//    glEnd();
+//    glColor3f(0, 0, 1);
+//    glBegin(GL_LINES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(0, 0, 300);
+//    glEnd();
+//    glEnable(GL_LIGHTING);
     terrain.drawTerrain();
     
-//    glPopMatrix();
     glutSwapBuffers();
 }
 
-void drawAxes() {
-    glColor3f(0, 0, 1);
-    glBegin(GL_LINES);
-    glVertex3f(0, 0, 0);
-    glVertex3f(300, 0, 0);
-    glEnd();
-    glColor3f(0, 1, 0);
-    glBegin(GL_LINES);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 300, 0);
-    glEnd();
-    glColor3f(1, 0, 0);
-    glBegin(GL_LINES);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 0, 300);
-    glEnd();
-}
 /*****************************************
  * draws current states of user-modifiable
  * variables in text in bottom left
@@ -161,14 +147,29 @@ void keyboard(unsigned char key, int x, int y) {
             }
             break;
             
+        //move camera
         case '[':
+            camPos[2] -= 1;
             break;
+        case ']':
+            camPos[2] += 1;
+            break;
+
+        //change algorithms
+        case '1':
+            terrain.changeTerrainAlgorithm(Terrain::FAULT);
+            break;
+        case '2':
+            terrain.changeTerrainAlgorithm(Terrain::CIRCLE);
+            break;
+            
         //reset
         case 'r':
         case 'R':
             terrain.generateTerrain();
             break;
 
+        //toggle shading
         case 's':
         case 'S':
             gouraudShading = !gouraudShading;
@@ -178,6 +179,7 @@ void keyboard(unsigned char key, int x, int y) {
                 glShadeModel(GL_FLAT);
             break;
             
+        //toggle through wireframe modes
         case 'w':
         case 'W':
             terrain.changeWireframeMode();
@@ -197,27 +199,21 @@ void keyboard(unsigned char key, int x, int y) {
  ****************************************/
 void special(int key, int x, int y) {
     
-    //zoom in and out and orbit using arrow keys
+    //move camera w/ arrow keys
     switch(key) {
         case GLUT_KEY_LEFT:
-//            angleAroundOriginY = (angleAroundOriginY > 0) ? angleAroundOriginY-1 : 360;
-            camPos[0]-= 1;
+            camPos[0] -= 1;
             break;
             
         case GLUT_KEY_RIGHT:
-//            angleAroundOriginY = (angleAroundOriginY < 360) ? angleAroundOriginY+1 : 0;
             camPos[0] += 1;
             break;
             
         case GLUT_KEY_UP:
-           // angleAroundOriginX = (angleAroundOriginX < 360) ? angleAroundOriginX+1 : 0;
-///            scaleFactor+= 0.01;
             camPos[1] += 1;
             break;
             
         case GLUT_KEY_DOWN:
-            //angleAroundOriginX = (angleAroundOriginX > 0) ? angleAroundOriginX-1 : 360;
-//            scaleFactor-=0.01;
             camPos[1] -= 1;
             break;
     }
@@ -225,8 +221,8 @@ void special(int key, int x, int y) {
 }
 
 /********************************************
- * sets viewport according to window size
- *******************************************/
+* sets viewport according to window size
+*******************************************/
 void reshapeFunc(int w, int h) {
     
     //don't let window become less than 300 x 300
@@ -242,7 +238,6 @@ void reshapeFunc(int w, int h) {
         //set up viewport
         glViewport(0, 0, (GLsizei) w, (GLsizei) h);
         gluPerspective(45, (GLfloat) w / (GLfloat) h, 1, 500);
-        
     }
     
     glutPostRedisplay();
@@ -253,19 +248,29 @@ void reshapeFunc(int w, int h) {
  ******************************************/
 void init() {
     
+    //get terrain size
     int terrainSize = 100;
     printf("Enter terrain size (min 50, max 300):\n");
-    //scanf("%d",&terrainSize);
+    scanf("%d",&terrainSize);
     
+    //initialize terrain
     terrain = Terrain(terrainSize);
-
+    
+    //put light in middle of terrain
+    lightPos[0] = (float) terrain.terrainSize/2.0;
+    lightPos[1] = 80;
+    lightPos[2] = (float) terrain.terrainSize/2.0;
+    lightPos[3] = 1.0;
+    
+    //set camera pos
+    camPos[0] = -terrain.terrainSize + terrain.terrainSize/4;
+    camPos[2] = -terrain.terrainSize + terrain.terrainSize/4;
+    
+    //set backrgound to dark gray
     glClearColor(0.25, 0.25, 0.25, 1);
-    glEnable(GL_LIGHT0);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glRotatef(angleAroundOriginY, 0, 1, 0);
-    glRotatef(angleAroundOriginX, 1, 0, 0);
+    //turn on lighting
+    glEnable(GL_LIGHT0);
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
 
     //set projection matrix, using perspective w/ correct aspect ratio
@@ -274,9 +279,9 @@ void init() {
     gluPerspective(45,(GLfloat) glutGet(GLUT_WINDOW_WIDTH) / (GLfloat) glutGet(GLUT_WINDOW_HEIGHT), 1, 100);
 }
 
-/*****************************************
- * program start point
- ****************************************/
+/****************************************
+* program start point 
+****************************************/
 int main(int argc, char** argv) {
     
     //initializeing GLUT
