@@ -218,11 +218,70 @@ void Terrain::drawTerrain() {
                     break;
             }
             
+<<<<<<< HEAD
             //reset material if snow or water just drawn
             if (heightMap[x][z] <= 4 || heightMap[x][z] >= 21) {
                 glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
                 glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
             }
+=======
+            //draw the polygons
+            glNormal3fv(faceNormals[x][z]);
+            
+			float diffuse[4] = { .7, 0, 0.2, 1.0 };
+			float grassdiff1[4] = { 0, 0.3, 0.2, 1 };
+			float snowdiff[4] = { 1, 1, 1, 1 };
+			float waterdiff2[4] = { 0, 0, 0.5, 1.0 };
+			float ambient[4] = { .7, 0, 0.2, 1.0 };
+			float grassambi1[4] = { 0, 1, 0.5, 1 };
+			float snowambi[4] = { 1, 1, 1, 1 };
+			float waterambi2[4] = { 0, 0, 0.7, 1 };
+			float specular[4] = { 0.1, 0.1, 0.1, 0.5 };
+			if (heightMap[x][z] >= 25){
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, snowambi);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, snowdiff);
+			}
+			if (heightMap[x][z] < 25 && heightMap[x][z] > 6){
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+			}
+			if (heightMap[x][z] <= 6 && heightMap[x][z] > 5){
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, grassambi1);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, grassdiff1);
+			}
+			if (heightMap[x][z] <= 5){
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, waterambi2);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, waterdiff2);
+			}
+			//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (heightMap[x][z] <= 6) ? ambient3 : (heightMap[x][z] <= 4) ? ambient1 : (heightMap[x][z] >= 21) ? ambient2 : ambient);
+			//glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (heightMap[x][z] <= 6) ? diffuse3 : (heightMap[x][z] <= 4) ? diffuse1 : (heightMap[x][z] >= 21) ? diffuse2 : diffuse);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 2);
+
+
+            glBegin(GL_QUADS);
+                colour = (float) heightMap[x][z]/ (float) MAX_HEIGHT;
+                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                glNormal3fv(vertexNormals[x][z]);
+                glVertex3f(x, heightMap[x][z], z);
+            
+                colour = (float) heightMap[x][z+1]/ (float) MAX_HEIGHT;
+                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                glNormal3fv(vertexNormals[x][z+1]);
+                glVertex3f(x, heightMap[x][z+1], z+1);
+                
+                colour = (float) heightMap[x+1][z+1]/ (float) MAX_HEIGHT;
+                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                glNormal3fv(vertexNormals[x+1][z+1]);
+                glVertex3f(x+1, heightMap[x+1][z+1], z+1);
+         
+                colour = (float) heightMap[x+1][z]/ (float) MAX_HEIGHT;
+                greenColour ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                glNormal3fv(vertexNormals[x+1][z]);
+                glVertex3f(x+1, heightMap[x+1][z], z);
+            glEnd();
+
+>>>>>>> Anagh
         }
     }
 }
