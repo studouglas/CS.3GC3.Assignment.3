@@ -1,36 +1,27 @@
 /*
  CS 3GC3 Assignment 3
  Stuart Douglas - 1214422
- 
+ Anagh Goswami - 1217426
  November 9th, 2014
  
  main.cpp
  -
 */
 
-#ifndef _OPENGL_
-#define _OPENGL_
+#include "Terrain.h"
+#include <vector>
+#include <stdlib.h>
+#include <math.h>
+
 #ifdef __APPLE__
 #  include <OpenGL/gl.h>
 #  include <OpenGL/glu.h>
 #  include <GLUT/glut.h>
 #else
+#  include <windows.h>
 #  include <GL/gl.h>
 #  include <GL/glu.h>
 #  include <GL/freeglut.h>
-#endif
-#endif
-
-#ifndef _STANDARD_
-#define _STANDARD_
-#include <vector>
-#include <stdlib.h>
-#include<math.h>
-#endif
-
-#ifndef _TERRAIN_
-#define _TERRAIN_
-#include "Terrain.h"
 #endif
 
 
@@ -46,7 +37,7 @@ void drawAxes();
 Terrain terrain = NULL;
 
 //state (modified by key presses)
-bool lighting = false;
+bool lighting = true;
 bool gouraudShading = true;
 
 //camera (modified by arrow keys)
@@ -55,7 +46,8 @@ float angleAroundOriginX = 0;
 float scaleFactor = 1;
 
 //light position (modified by WASD & TG)
-float lightPos[4] = {-5,4.5,0.5,1};
+float lightPos[4] = {-10,-40,-10,1};
+float camPos[3] = {-20,50,-20};
 
 /*****************************************
  * displays all objects
@@ -68,22 +60,21 @@ void display(void) {
     glLoadIdentity();
     
     //point camera
-    gluLookAt(10,20,10, -10,0,0, 0,1,0);
+    gluLookAt(camPos[0],camPos[1],camPos[2], 40,0,40, 0,1,0);
     
     //apply transformations (from arrow key presses)
-    glPushMatrix();
-    glScalef(0.2, 0.2, 0.2);
-    glScalef(scaleFactor, scaleFactor, scaleFactor);
-    //glScalef(terrain.scaleFactor,terrain.scaleFactor, terrain.scaleFactor);
-    glRotatef(angleAroundOriginY, 0, 1, 0);
-    glRotatef(angleAroundOriginX, 1, 0, 0);
-    glTranslatef(-10,0,-10);
+//    glPushMatrix();
+    //glScalef(0.2, 0.2, 0.2);
+//    glScalef(scaleFactor, scaleFactor, scaleFactor);
+//    glRotatef(angleAroundOriginY, 0, 1, 0);
+//    glRotatef(angleAroundOriginX, 1, 0, 0);
+//    glTranslatef(-10,0,-10);
     
     drawText();
     drawAxes();
     terrain.drawTerrain();
     
-    glPopMatrix();
+//    glPopMatrix();
     glutSwapBuffers();
 }
 
@@ -127,8 +118,13 @@ void drawText() {
     //set up string to print
     char formatStr[] = "Lighting : %s | Shading: %s | Wireframe : %s";
     char outputStr[100];
-    sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
     
+    #ifdef __APPLE__
+    sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+    #else
+    sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+    #endif
+
     //display string
     glColor3f(1, 1, 1);
     glRasterPos2f(10,10);
@@ -157,7 +153,7 @@ void keyboard(unsigned char key, int x, int y) {
             lighting = !lighting;
             if (lighting) {
                 glEnable(GL_LIGHTING);
-                glEnable(GL_CULL_FACE);
+                //glEnable(GL_CULL_FACE);
             }
             else {
                 glDisable(GL_LIGHTING);
@@ -165,6 +161,8 @@ void keyboard(unsigned char key, int x, int y) {
             }
             break;
             
+        case '[':
+            break;
         //reset
         case 'r':
         case 'R':
@@ -202,21 +200,25 @@ void special(int key, int x, int y) {
     //zoom in and out and orbit using arrow keys
     switch(key) {
         case GLUT_KEY_LEFT:
-            angleAroundOriginY = (angleAroundOriginY > 0) ? angleAroundOriginY-1 : 360;
+//            angleAroundOriginY = (angleAroundOriginY > 0) ? angleAroundOriginY-1 : 360;
+            camPos[0]-= 1;
             break;
             
         case GLUT_KEY_RIGHT:
-            angleAroundOriginY = (angleAroundOriginY < 360) ? angleAroundOriginY+1 : 0;
+//            angleAroundOriginY = (angleAroundOriginY < 360) ? angleAroundOriginY+1 : 0;
+            camPos[0] += 1;
             break;
             
         case GLUT_KEY_UP:
            // angleAroundOriginX = (angleAroundOriginX < 360) ? angleAroundOriginX+1 : 0;
-            scaleFactor+= 0.01;
+///            scaleFactor+= 0.01;
+            camPos[1] += 1;
             break;
             
         case GLUT_KEY_DOWN:
             //angleAroundOriginX = (angleAroundOriginX > 0) ? angleAroundOriginX-1 : 360;
-            scaleFactor-=0.01;
+//            scaleFactor-=0.01;
+            camPos[1] -= 1;
             break;
     }
     glutPostRedisplay();
@@ -239,7 +241,7 @@ void reshapeFunc(int w, int h) {
         
         //set up viewport
         glViewport(0, 0, (GLsizei) w, (GLsizei) h);
-        gluPerspective(45, (GLfloat) w / (GLfloat) h, 1, 100);
+        gluPerspective(45, (GLfloat) w / (GLfloat) h, 1, 500);
         
     }
     
@@ -257,6 +259,7 @@ void init() {
     
     terrain = Terrain(terrainSize);
 
+    glClearColor(0.25, 0.25, 0.25, 1);
     glEnable(GL_LIGHT0);
 
     glMatrixMode(GL_MODELVIEW);
@@ -289,11 +292,10 @@ int main(int argc, char** argv) {
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
-    //glutReshapeFunc(reshapeFunc);
+    glutReshapeFunc(reshapeFunc);
     
     //setting up depth test & lighting normalization
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_NORMALIZE);
     
     //initializing variables
     init();

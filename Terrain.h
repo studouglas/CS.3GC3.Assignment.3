@@ -17,6 +17,8 @@ class Terrain {
         void drawTerrain();
         void generateTerrain();
         void changeWireframeMode();
+        void calculateVertexNormals();
+        void calculateFaceNormals();
         char* getWireframeMode();
         /****************************************
          *    PUBLIC GLOBAL VARIABLES
