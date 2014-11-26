@@ -316,12 +316,27 @@ void keyboard(unsigned char key, int x, int y) {
             terrain.changeWireframeMode();
             break;
             
+        case ',':
+            light1Pos[0] -= 1;
+            break;
+        case '.':
+            light1Pos[2] -= 1;
+            break;
+        case '/':
+            light1Pos[0] += 1;
+            break;
+        case ';':
+            light1Pos[2] += 1;
+            break;
+            
+            
         //quitting
         case 'q':
         case 27:
             exit (0);
             break;
     }
+    glLightfv(GL_LIGHT0, GL_POSITION, light1Pos);
     glutPostRedisplay();
 }
 
@@ -397,9 +412,9 @@ void init() {
     light1Pos[3] = 1.0;
     
     //put light 2 at origin
-    light2Pos[0] = 0;
+    light2Pos[0] = -(float) terrain.terrainSize/2.0;
     light2Pos[1] = 80;
-    light2Pos[2] = 0;
+    light2Pos[2] = -(float) terrain.terrainSize/2.0;
     light2Pos[3] = 1.0;
     
     //set camera pos
