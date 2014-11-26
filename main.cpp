@@ -8,8 +8,8 @@
  -
 */
 
-#include "Character.h"
 #include "Terrain.h"
+
 #include <vector>
 #include <stdlib.h>
 #include <math.h>
@@ -30,12 +30,13 @@
  *    FUNCTION DECLARATIONS
  ****************************************/
 void drawText();
+void moveCharacter();
+void drawSnowman();
 
 /*****************************************
  *    GLOBAL VARIABLES
  ****************************************/
 Terrain terrain = NULL;
-Character character;
 
 //state (modified by key presses)
 bool lighting = true;
@@ -48,7 +49,12 @@ float camPos[3] = {-100,60,-100};
 float light1Pos[4];
 float light2Pos[4];
 
-
+float position[3] = {0,40,0};
+//float rot[3] = {0, 0, 0};
+float headRot[] = {0, 0, 0};
+float angle = 0.0f;
+float xDir = 0.1;
+float zDir = 0.1;
 
 /*****************************************
  * displays all objects
@@ -64,26 +70,27 @@ void display(void) {
     gluLookAt(camPos[0],camPos[1],camPos[2], 0,0,0, 0,1,0);
     
     drawText();
-    glDisable(GL_LIGHTING);
-    glColor3f(1, 0, 0);
-    glBegin(GL_LINES);
-    glVertex3f(0, 0, 0);
-    glVertex3f(300, 0, 0);
-    glEnd();
-    glColor3f(0, 1, 0);
-    glBegin(GL_LINES);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 300, 0);
-    glEnd();
-    glColor3f(0, 0, 1);
-    glBegin(GL_LINES);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 0, 300);
-    glEnd();
-    if (lighting)
-        glEnable(GL_LIGHTING);
+//    glDisable(GL_LIGHTING);
+//    glColor3f(1, 0, 0);
+//    glBegin(GL_LINES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(300, 0, 0);
+//    glEnd();
+//    glColor3f(0, 1, 0);
+//    glBegin(GL_LINES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(0, 300, 0);
+//    glEnd();
+//    glColor3f(0, 0, 1);
+//    glBegin(GL_LINES);
+//    glVertex3f(0, 0, 0);
+//    glVertex3f(0, 0, 300);
+//    glEnd();
+//    if (lighting)
+//        glEnable(GL_LIGHTING);
+//    
     terrain.drawTerrain();
-    
+    drawSnowman();
     glutSwapBuffers();
 }
 
@@ -133,6 +140,119 @@ void drawText() {
         glEnable(GL_LIGHTING);
 }
 
+void moveCharacter() {
+    
+    float terrainOffset = terrain.terrainSize/2.0;
+    
+    if (position[0]+xDir <= terrainOffset-0.5 && position[0]+xDir >= -terrainOffset+0.5) {
+        position[0] += xDir;
+    }
+    else {
+        xDir = -xDir;
+        position[0] += xDir;
+    }
+    
+    if (position[2]+zDir <= terrainOffset-0.5 && position[2]+zDir >= -terrainOffset+0.5) {
+        position[2] += zDir;
+    }
+    else {
+        zDir = -zDir;
+        position[2] += zDir;
+    }
+
+    int x = (int) position[0] + terrain.terrainSize/2.0;
+    int z = (int) position[2] + terrain.terrainSize/2.0;
+    
+    //^  B ---- C
+    //|  |      |
+    //z  A ---- D
+    //x ---->
+    float A = terrain.heightMap[(int)floor(x)][(int)floor(z)];
+    //float B = terrain.heightMap[(int)floor(x)][(int)ceil(z)];
+    float C = terrain.heightMap[(int)ceil(x)][(int)ceil(z)];
+    //float D = terrain.heightMap[(int)ceil(x)][(int)floor(z)];
+
+    float xPercent = x-floor(x);
+    float zPercent = z-floor(z);
+    float a = sqrtf(xPercent*xPercent + zPercent*zPercent);
+    
+    float b = A+a*(C-A);
+    
+    position[1] = b;
+
+}
+
+void drawSnowman() {
+    
+    float diffuse[4] = {1,1,1, 1};
+    float ambient[4] = {1,1,1, 1};
+    float specular[4] = {0.1,0.1,0.1, 0.5};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 2);
+    
+    glPushMatrix();
+    
+    glTranslatef(position[0], position[1], position[2]);
+    
+    //draw body
+    glColor3f(1,1,1);
+    glutSolidSphere(1, 16, 16);
+    
+    //draw buttons
+    glPushMatrix();
+    glTranslatef(0, 0.35, 0.9);
+    glColor3f(0, 0, 0);
+    glutSolidSphere(0.1, 10, 10);
+    glPopMatrix();
+    
+    glPushMatrix();
+    glTranslatef(0, 0.15, 0.95);
+    glColor3f(0, 0, 0);
+    glutSolidSphere(0.1, 10, 10);
+    glPopMatrix();
+    
+    glPushMatrix();
+    glTranslatef(0, -0.05, 0.95);
+    glColor3f(0, 0, 0);
+    glutSolidSphere(0.1, 10, 10);
+    glPopMatrix();
+    
+    glPushMatrix();
+    
+    //translate relative to body, and draw head
+    glTranslatef(0, 1.25, 0);
+    glRotatef(headRot[1], 0, 1, 0); //turn the head relative to the body
+    glColor3f(1,1,1);
+    glutSolidSphere(0.5, 16, 16);
+    
+    //translate and draw right eye
+    glPushMatrix();
+    glTranslatef(0.2, 0.15, 0.45);
+    glColor3f(0,0,0);
+    glutSolidSphere(0.1, 10, 10);
+    glPopMatrix();
+    
+    //translate and draw left eye
+    glPushMatrix();
+    glTranslatef(-0.2, 0.15, 0.45);
+    glColor3f(0,0,0);
+    glutSolidSphere(0.1, 10, 10);
+    glPopMatrix();
+    
+    //translate and draw nose
+    glPushMatrix();
+    glTranslatef(0, 0, 0.5);
+    glColor3f(1,0.4,0);
+    glutSolidSphere(0.1, 10, 10);
+    glPopMatrix();
+    
+    glPopMatrix();//body
+    glPopMatrix();//snowman
+}
+
+
 /********************************************
  * handles key presses for program functions
  *******************************************/
@@ -174,6 +294,10 @@ void keyboard(unsigned char key, int x, int y) {
         case 'r':
         case 'R':
             terrain.generateTerrain();
+            position[0] = 0;
+            position[2] = 0;
+            xDir = ((double) rand() / RAND_MAX)/2.0;
+            zDir = ((double) rand() / RAND_MAX)/2.0;
             break;
 
         //toggle shading
@@ -256,13 +380,15 @@ void reshapeFunc(int w, int h) {
 void init() {
     
     //get terrain size
-    int terrainSize = 50;
+    int terrainSize = 100;
     printf("Enter terrain size (min 50, max 300):\n");
 //    scanf("%d",&terrainSize);
 
     //initialize terrain
     terrain = Terrain(terrainSize);
-    character = Character();
+    
+    xDir = ((double) rand() / RAND_MAX)/2.0;
+    zDir = ((double) rand() / RAND_MAX)/2.0;
     
     //put light 1 in middle of terrain
     light1Pos[0] = (float) terrain.terrainSize/2.0;
@@ -297,7 +423,7 @@ void init() {
 }
 
 void timerFunc(int value) {
-    character.move();
+    moveCharacter();
     
     glutTimerFunc(32, timerFunc, 0);
     glutPostRedisplay();
