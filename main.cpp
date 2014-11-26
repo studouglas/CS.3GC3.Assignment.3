@@ -3,9 +3,6 @@
  Stuart Douglas - 1214422
  Anagh Goswami - 1217426
  November 9th, 2014
- 
- main.cpp
- -
 */
 
 #include "Terrain.h"
@@ -41,24 +38,21 @@ Terrain terrain = NULL;
 //state (modified by key presses)
 bool lighting = true;
 bool gouraudShading = true;
+bool paused = false;
 
-//camera (modified by arrow keys)
+//cam & light positions
 float camPos[3] = {-100,60,-100};
-
-//light position (modified by WASD & TG)
+float light0Pos[4];
 float light1Pos[4];
-float light2Pos[4];
 
-float position[3] = {0,40,0};
-//float rot[3] = {0, 0, 0};
-float headRot[] = {0, 0, 0};
-float angle = 0.0f;
-float xDir = 0.1;
-float zDir = 0.1;
+//character positions & movement vector
+float characterPos[3] = {0,40,0};
+float characterXDir = 0.1;
+float characterZDir = 0.1;
 
 /*****************************************
- * displays all objects
- ****************************************/
+* displays all objects
+****************************************/
 void display(void) {
     
     //clear bits and model view matrix
@@ -69,35 +63,18 @@ void display(void) {
     //point camera
     gluLookAt(camPos[0],camPos[1],camPos[2], 0,0,0, 0,1,0);
     
-    drawText();
-//    glDisable(GL_LIGHTING);
-//    glColor3f(1, 0, 0);
-//    glBegin(GL_LINES);
-//    glVertex3f(0, 0, 0);
-//    glVertex3f(300, 0, 0);
-//    glEnd();
-//    glColor3f(0, 1, 0);
-//    glBegin(GL_LINES);
-//    glVertex3f(0, 0, 0);
-//    glVertex3f(0, 300, 0);
-//    glEnd();
-//    glColor3f(0, 0, 1);
-//    glBegin(GL_LINES);
-//    glVertex3f(0, 0, 0);
-//    glVertex3f(0, 0, 300);
-//    glEnd();
-//    if (lighting)
-//        glEnable(GL_LIGHTING);
-//    
+    //draw scene
     terrain.drawTerrain();
+    drawText();
     drawSnowman();
+    
     glutSwapBuffers();
 }
 
 /*****************************************
- * draws current states of user-modifiable
- * variables in text in bottom left
- ****************************************/
+* draws current states of user-modifiable
+* variables in text in bottom left
+****************************************/
 void drawText() {
     
     //clear matrix
@@ -115,14 +92,14 @@ void drawText() {
     glDisable(GL_LIGHTING);
     
     //set up string to print
-    char formatStr[] = "Lighting : %s | Shading: %s | Wireframe : %s";
+    char formatStr[] = "Lighting : %s | Shading: %s | Wireframe: %s | Algorithm: %s | Size: %d x %d";
     char outputStr[100];
     
     //for some reason sprintf requires the _s in windows
     #ifdef __APPLE__
-        sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+        sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),terrain.getAlgorithm(), terrain.terrainSize,terrain.terrainSize);
     #else
-        sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode());
+        sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),terrain.getAlgorithm(),terrain.terrainSize,terrain.terrainSize);
     #endif
 
     //display string
@@ -140,122 +117,134 @@ void drawText() {
         glEnable(GL_LIGHTING);
 }
 
+/****************************************
+* moves character in x and y directions,
+* turning around if hits edge of terrain
+****************************************/
 void moveCharacter() {
     
     float terrainOffset = terrain.terrainSize/2.0;
     
-    if (position[0]+xDir <= terrainOffset-0.5 && position[0]+xDir >= -terrainOffset+0.5) {
-        position[0] += xDir;
-    }
+    //x is within terrain
+    if (characterPos[0]+characterXDir <= terrainOffset-1 && characterPos[0]+characterXDir >= -terrainOffset+1)
+        characterPos[0] += characterXDir;
+    //x hit bound
     else {
-        xDir = -xDir;
-        position[0] += xDir;
+        characterXDir = -characterXDir;
+        characterPos[0] += characterXDir;
     }
     
-    if (position[2]+zDir <= terrainOffset-0.5 && position[2]+zDir >= -terrainOffset+0.5) {
-        position[2] += zDir;
-    }
+    //z within terrain
+    if (characterPos[2]+characterZDir <= terrainOffset-1 && characterPos[2]+characterZDir >= -terrainOffset+1)
+        characterPos[2] += characterZDir;
+    //z hit bound
     else {
-        zDir = -zDir;
-        position[2] += zDir;
+        characterZDir = -characterZDir;
+        characterPos[2] += characterZDir;
     }
 
-    int x = (int) position[0] + terrain.terrainSize/2.0;
-    int z = (int) position[2] + terrain.terrainSize/2.0;
+    //we didn't do full bilinear interpolation, instead we took two opposite points of
+    //the quad (a and b) and interpolated our current height from the distance
+    //down that line. This makes his height movement a little less jumpy
+    float xIndexInHeightmap = characterPos[0] + terrain.terrainSize/2.0;
+    float zIndexInHeightmap = characterPos[2] + terrain.terrainSize/2.0;
     
-    //^  B ---- C
-    //|  |      |
-    //z  A ---- D
-    //x ---->
-    float A = terrain.heightMap[(int)floor(x)][(int)floor(z)];
-    //float B = terrain.heightMap[(int)floor(x)][(int)ceil(z)];
-    float C = terrain.heightMap[(int)ceil(x)][(int)ceil(z)];
-    //float D = terrain.heightMap[(int)ceil(x)][(int)floor(z)];
+    float aHeight = terrain.heightMap[(int)floor(xIndexInHeightmap)][(int)floor(zIndexInHeightmap)];
+    float bHeight = terrain.heightMap[(int)floor(xIndexInHeightmap+1)][(int)floor(zIndexInHeightmap+1)];
 
-    float xPercent = x-floor(x);
-    float zPercent = z-floor(z);
-    float a = sqrtf(xPercent*xPercent + zPercent*zPercent);
+    float xPercent = xIndexInHeightmap-floor(xIndexInHeightmap);
+    float zPercent = zIndexInHeightmap-floor(zIndexInHeightmap);
+    float distOnABLine = sqrtf(xPercent*xPercent + zPercent*zPercent);
     
-    float b = A+a*(C-A);
-    
-    position[1] = b;
-
+    characterPos[1] = aHeight+distOnABLine*(bHeight-aHeight);;
 }
 
+/****************************************
+* draws a snowman in characterPos
+* code taken from Snowman.c file uploaded
+* to Avenue by Dr. Teather
+****************************************/
 void drawSnowman() {
     
+    //set initial colour to white
+    glColor3f(1,1,1);
     float diffuse[4] = {1,1,1, 1};
+    float diffuseBlack[4] = {0,0,0, 1};
+    float diffuseOrange[4] = {1,0.4,0, 1};
     float ambient[4] = {1,1,1, 1};
+    float ambientBlack[4] = {0,0,0, 1};
+    float ambientOrange[4] = {1,0.4,0, 1};
     float specular[4] = {0.1,0.1,0.1, 0.5};
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 2);
     
+    //body is white
     glPushMatrix();
+    glTranslatef(characterPos[0], characterPos[1], characterPos[2]);
+    glutSolidSphere(1, 16, 16); //body
     
-    glTranslatef(position[0], position[1], position[2]);
-    
-    //draw body
-    glColor3f(1,1,1);
-    glutSolidSphere(1, 16, 16);
-    
-    //draw buttons
-    glPushMatrix();
-    glTranslatef(0, 0.35, 0.9);
+    //buttons are black
     glColor3f(0, 0, 0);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseBlack);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientBlack);
+
+    glPushMatrix();
     glutSolidSphere(0.1, 10, 10);
     glPopMatrix();
     
     glPushMatrix();
     glTranslatef(0, 0.15, 0.95);
-    glColor3f(0, 0, 0);
     glutSolidSphere(0.1, 10, 10);
     glPopMatrix();
     
     glPushMatrix();
     glTranslatef(0, -0.05, 0.95);
-    glColor3f(0, 0, 0);
     glutSolidSphere(0.1, 10, 10);
     glPopMatrix();
-    
-    glPushMatrix();
-    
-    //translate relative to body, and draw head
-    glTranslatef(0, 1.25, 0);
-    glRotatef(headRot[1], 0, 1, 0); //turn the head relative to the body
+
+    //head is white
     glColor3f(1,1,1);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+
+    glPushMatrix();
+    glTranslatef(0, 1.25, 0);
     glutSolidSphere(0.5, 16, 16);
     
-    //translate and draw right eye
+    //eyes are black
+    glColor3f(0,0,0);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseBlack);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientBlack);
+
     glPushMatrix();
     glTranslatef(0.2, 0.15, 0.45);
-    glColor3f(0,0,0);
     glutSolidSphere(0.1, 10, 10);
     glPopMatrix();
     
-    //translate and draw left eye
     glPushMatrix();
     glTranslatef(-0.2, 0.15, 0.45);
-    glColor3f(0,0,0);
     glutSolidSphere(0.1, 10, 10);
     glPopMatrix();
     
-    //translate and draw nose
+    //nose is orange
+    glColor3f(1,0.4,0);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseOrange);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientOrange);
+    
     glPushMatrix();
     glTranslatef(0, 0, 0.5);
-    glColor3f(1,0.4,0);
     glutSolidSphere(0.1, 10, 10);
     glPopMatrix();
     
-    glPopMatrix();//body
-    glPopMatrix();//snowman
+    glPopMatrix(); //body
+    glPopMatrix(); //snowman
 }
 
-
 /********************************************
- * handles key presses for program functions
- *******************************************/
+* handles key presses for program functions
+*******************************************/
 void keyboard(unsigned char key, int x, int y) {
     
     switch (key) {
@@ -290,14 +279,18 @@ void keyboard(unsigned char key, int x, int y) {
             terrain.changeTerrainAlgorithm(Terrain::CIRCLE);
             break;
             
-        //reset
+        //reset scene, character, and lights
         case 'r':
         case 'R':
             terrain.generateTerrain();
-            position[0] = 0;
-            position[2] = 0;
-            xDir = ((double) rand() / RAND_MAX)/2.0;
-            zDir = ((double) rand() / RAND_MAX)/2.0;
+            characterPos[0] = 0;
+            characterPos[2] = 0;
+            characterXDir = ((double) rand() / RAND_MAX)/2.0;
+            characterZDir = ((double) rand() / RAND_MAX)/2.0;
+            light0Pos[0] = terrain.terrainSize/2.0;
+            light0Pos[2] = terrain.terrainSize/2.0;
+            light1Pos[0] = -terrain.terrainSize/2.0;
+            light1Pos[2] = -terrain.terrainSize/2.0;
             break;
 
         //toggle shading
@@ -316,19 +309,33 @@ void keyboard(unsigned char key, int x, int y) {
             terrain.changeWireframeMode();
             break;
             
+        //rotate lights in circle
         case ',':
+        case '<':
+            light0Pos[0] -= 1;
             light1Pos[0] -= 1;
             break;
         case '.':
+        case '>':
+            light0Pos[2] -= 1;
             light1Pos[2] -= 1;
             break;
         case '/':
+        case '?':
+            light0Pos[0] += 1;
             light1Pos[0] += 1;
             break;
         case ';':
+        case ':':
+            light0Pos[2] += 1;
             light1Pos[2] += 1;
             break;
-            
+        
+        //pause
+        case 'p':
+        case 'P':
+            paused = !paused;
+            break;
             
         //quitting
         case 'q':
@@ -336,13 +343,20 @@ void keyboard(unsigned char key, int x, int y) {
             exit (0);
             break;
     }
-    glLightfv(GL_LIGHT0, GL_POSITION, light1Pos);
+    //move lights
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glLightfv(GL_LIGHT0, GL_POSITION, light0Pos);
+    glLightfv(GL_LIGHT1, GL_POSITION, light1Pos);
+    glPopMatrix();
+    
     glutPostRedisplay();
 }
 
 /*****************************************
- * handles arrow key presses (to move cam)
- ****************************************/
+* handles arrow key presses (to move cam)
+****************************************/
 void special(int key, int x, int y) {
     
     //move camera w/ arrow keys
@@ -390,32 +404,52 @@ void reshapeFunc(int w, int h) {
 }
 
 /*******************************************
- *initializes global variables and settings
- ******************************************/
+*initializes global variables and settings
+******************************************/
 void init() {
     
     //get terrain size
     int terrainSize = 100;
     printf("Enter terrain size (min 50, max 300):\n");
-//    scanf("%d",&terrainSize);
+    scanf("%d",&terrainSize);
+
+    //introduction console text
+    printf("\nWelcome to CS 3GC3 Assignment 3 - Terrain Generator!");
+    printf("\nStuart Douglas - 1214422 | Anagh Goswami - 1217426");
+    printf("\n\nThe following keyboard functions can be used:");
+    printf("\n\t'1': LINE-FAULT algorithm\n\t'2': CIRCLE algorithm");
+    printf("\n\t'q': Quit Game\n\t'p': Pause Character\n\t'r': Generate a new terrain, reset lights and character");
+    printf("\n\t'w': Toggle Wireframe Modes");
+    printf("\n\t's': Toggle Gouraud or Flat shading");
+    printf("\n\t'l': Toggle Lighting on or off");
+    printf("\n\t'arrow keys': Move Camera");
+    printf("\n\t'<' Move Lights in -X direction");
+    printf("\n\t'/' Move Lights in +X direction");
+    printf("\n\t'.' Move Lights in -Z direction");
+    printf("\n\t';' Move Lights in +Z direction");
+    printf("\nBonus Features:");
+    printf("\n\tState Text: current values of user-definable state shown in bottom left");
+    printf("\n\tMoving Character: A snowman moves around the terrain, adjusting to the height of the terrain and turning around when he hits the edges.");
+    printf("\n\tMultiple Algorithms: 2 Algorithms for generating the terrian are included (press 1 and 2 to switch).");
+    printf("\n\tTerrain Colours: Depending on the height, terrain is blue (water), brown (land), green (grass), or white (snow).");
+    printf("\n\tSmooth Terrain: We have implemented a smoothing algorithm for the FAULT line terrain that makes it less jagged.");
 
     //initialize terrain
     terrain = Terrain(terrainSize);
     
-    xDir = ((double) rand() / RAND_MAX)/2.0;
-    zDir = ((double) rand() / RAND_MAX)/2.0;
+    characterXDir = ((double) rand() / RAND_MAX)/2.0;
+    characterZDir = ((double) rand() / RAND_MAX)/2.0;
     
-    //put light 1 in middle of terrain
-    light1Pos[0] = (float) terrain.terrainSize/2.0;
+    //put lights on opposite sides of terrain
+    light0Pos[0] = (float) terrain.terrainSize/2.0;
+    light0Pos[1] = 80;
+    light0Pos[2] = (float) terrain.terrainSize/2.0;
+    light0Pos[3] = 1.0;
+    
+    light1Pos[0] = -(float) terrain.terrainSize/2.0;
     light1Pos[1] = 80;
-    light1Pos[2] = (float) terrain.terrainSize/2.0;
+    light1Pos[2] = -(float) terrain.terrainSize/2.0;
     light1Pos[3] = 1.0;
-    
-    //put light 2 at origin
-    light2Pos[0] = -(float) terrain.terrainSize/2.0;
-    light2Pos[1] = 80;
-    light2Pos[2] = -(float) terrain.terrainSize/2.0;
-    light2Pos[3] = 1.0;
     
     //set camera pos
     camPos[0] = -terrain.terrainSize + terrain.terrainSize/4;
@@ -427,9 +461,9 @@ void init() {
     //turn on lighting & back-face culling
     glEnable(GL_CULL_FACE);
     glEnable(GL_LIGHT0);
-    glLightfv(GL_LIGHT0, GL_POSITION, light1Pos);
     glEnable(GL_LIGHT1);
-    glLightfv(GL_LIGHT1, GL_POSITION, light2Pos);
+    glLightfv(GL_LIGHT0, GL_POSITION, light0Pos);
+    glLightfv(GL_LIGHT1, GL_POSITION, light1Pos);
 
     //set projection matrix, using perspective w/ correct aspect ratio
     glMatrixMode(GL_PROJECTION);
@@ -437,8 +471,12 @@ void init() {
     gluPerspective(45,(GLfloat) glutGet(GLUT_WINDOW_WIDTH) / (GLfloat) glutGet(GLUT_WINDOW_HEIGHT), 1, 100);
 }
 
+/****************************************
+* moves snowman around landscape
+****************************************/
 void timerFunc(int value) {
-    moveCharacter();
+    if (!paused)
+        moveCharacter();
     
     glutTimerFunc(32, timerFunc, 0);
     glutPostRedisplay();

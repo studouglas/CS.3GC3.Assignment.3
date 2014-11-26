@@ -23,7 +23,7 @@ class Terrain {
         void calculateVertexNormals();
         void calculateFaceNormals();
         char* getWireframeMode();
-    
+        char* getAlgorithm();
     
         /***************************************
         *    PUBLIC GLOBAL VARIABLES

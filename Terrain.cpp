@@ -3,7 +3,6 @@
  Stuart Douglas - 1214422
  Anagh Goswami - 1217426
  November 10th, 2014
- 
  */
 
 #include "Terrain.h"
@@ -31,8 +30,8 @@ float faceNormals[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE][3];
 float maxTerrainHeightValue = 0;
 
 /*****************************************
- * Constructor
- ****************************************/
+* Constructor
+****************************************/
 Terrain::Terrain(int size) {
 
     //normalize size to acceptable value
@@ -48,9 +47,9 @@ Terrain::Terrain(int size) {
 }
 
 /*****************************************
- * Initializes heightMap with heights as
- * per line cutting & circles algorithms
- ****************************************/
+* Initializes heightMap with heights as
+* per line cutting & circles algorithms
+****************************************/
 void Terrain::generateTerrain() {
 
     //reset heightmap
@@ -142,12 +141,11 @@ void Terrain::generateTerrain() {
     calculateFaceNormals();
 }
 
-
 /*****************************************
- * Smooths out the rough terrain using
- * algorithm from:
- * www.lighthouse3d.com/opengl/terrain/index.php3?smoothing
- ****************************************/
+* Smooths out the rough terrain using
+* algorithm from:
+* www.lighthouse3d.com/opengl/terrain/index.php3?smoothing
+****************************************/
 void Terrain::smoothTerrain(float smooth) {
 
     if (smooth < 0)
@@ -178,8 +176,8 @@ void Terrain::smoothTerrain(float smooth) {
 }
 
 /*****************************************
- * Draws the generated terrain
- ****************************************/
+* Draws the generated terrain
+****************************************/
 void Terrain::drawTerrain() {
     
     float specular[4] = {0.1,0.1,0.1, 0.5};
@@ -271,12 +269,12 @@ void Terrain::drawTerrain() {
     }
 }
 
-/**************************************************************
- * calculates normals for every vertex in the heightmap. 
- * Code was taken from:
- * www.lighthouse3d.com/opengl/terrain/index.php3?normals
- * We modified the code to suit our needs.
- **************************************************************/
+/************************************************************** 
+* calculates normals for every vertex in the heightmap.
+* Code was taken from:
+* www.lighthouse3d.com/opengl/terrain/index.php3?normals
+* We modified the code to suit our needs.
+**************************************************************/
 void Terrain::calculateVertexNormals() {
     
     //calculate normals
@@ -313,13 +311,13 @@ void Terrain::calculateVertexNormals() {
 }
 
 /**************************************************************
- * calculates normals for every FACE in the heightmap. The indice
- * of the bottom corner (x=0,z=0 for bottom left quad) of each 
- * quad holds the face normal of that quad in the faceNormals array.
- * www.lighthouse3d.com/opengl/terrain/index.php3?normals was
- * used as a reference. Their code is for calculating vertex normals
- * from face normals, we calculated faces by normalizing vertex ones.
- **************************************************************/
+* calculates normals for every FACE in the heightmap. The indice
+* of the bottom corner (x=0,z=0 for bottom left quad) of each
+* quad holds the face normal of that quad in the faceNormals array.
+* www.lighthouse3d.com/opengl/terrain/index.php3?normals was
+* used as a reference. Their code is for calculating vertex normals
+* from face normals, we calculated faces by normalizing vertex ones.
+**************************************************************/
 void Terrain::calculateFaceNormals() {
 
     //iterate over all values in heightmap except right most
@@ -372,8 +370,8 @@ void Terrain::changeWireframeMode() {
 }
 
 /*****************************************
- * Toggles through the 3 wireframe modes.
- *****************************************/
+* Toggles through the 3 wireframe modes.
+*****************************************/
 void Terrain::changeTerrainAlgorithm(TerrainAlgorithm algorithm) {
     terrainAlgorithm = algorithm;
     generateTerrain();
@@ -390,3 +388,15 @@ char* Terrain::getWireframeMode() {
     else
         return (char*) "BOTH";
 }
+
+/*****************************************
+* Returns string of wireframe mode
+****************************************/
+char* Terrain::getAlgorithm() {
+    if (terrainAlgorithm == FAULT)
+        return (char*) "FAULT";
+    else
+        return (char*) "CIRCLE";
+}
+
+
