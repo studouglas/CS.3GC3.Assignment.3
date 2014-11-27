@@ -234,7 +234,6 @@ void Terrain::drawTerrain() {
                 drawingWireframe = true;
             }
             
-            //glNormal3fv(faceNormals[x][z]);
             float terrainOffset = terrainSize/2.0;
             
             //draw the quad (twice if both is wireframe mode)
