@@ -92,14 +92,14 @@ void drawText() {
     glDisable(GL_LIGHTING);
     
     //set up string to print
-    char formatStr[] = "Lighting : %s | Shading: %s | Wireframe: %s | Algorithm: %s | Size: %d x %d";
+    char formatStr[] = "Lighting : %s | Shading: %s | Wireframe: %s | Algorithm: %s | Normals: %s | Size: %d x %d";
     char outputStr[100];
     
     //for some reason sprintf requires the _s in windows
     #ifdef __APPLE__
-        sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),terrain.getAlgorithm(), terrain.terrainSize,terrain.terrainSize);
+        sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),terrain.getAlgorithm(), (terrain.usingVertexNormals ? "VERTEX" : "FACE"),terrain.terrainSize,terrain.terrainSize);
     #else
-        sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),terrain.getAlgorithm(),terrain.terrainSize,terrain.terrainSize);
+        sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),terrain.getAlgorithm(),terrain,(terrain.usingVertexNormals ? "VERTEX" : "FACE"),terrain.terrainSize,terrain.terrainSize);
     #endif
 
     //display string
@@ -303,6 +303,12 @@ void keyboard(unsigned char key, int x, int y) {
                 glShadeModel(GL_FLAT);
             break;
             
+        //toggle vertex or face normals
+        case 'n':
+        case 'N':
+            terrain.usingVertexNormals = !terrain.usingVertexNormals;
+            break;
+            
         //toggle through wireframe modes
         case 'w':
         case 'W':
@@ -343,6 +349,7 @@ void keyboard(unsigned char key, int x, int y) {
             exit (0);
             break;
     }
+    
     //move lights
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -409,9 +416,9 @@ void reshapeFunc(int w, int h) {
 void init() {
     
     //get terrain size
-    int terrainSize = 100;
+    int terrainSize = 300;
     printf("Enter terrain size (min 50, max 300):\n");
-    scanf("%d",&terrainSize);
+//    scanf("%d",&terrainSize);
 
     //introduction console text
     printf("\nWelcome to CS 3GC3 Assignment 3 - Terrain Generator!");
@@ -421,6 +428,7 @@ void init() {
     printf("\n\t'q': Quit Game\n\t'p': Pause Character\n\t'r': Generate a new terrain, reset lights and character");
     printf("\n\t'w': Toggle Wireframe Modes");
     printf("\n\t's': Toggle Gouraud or Flat shading");
+    printf("\n\t'n': Toggle Vertex or Face Normals");
     printf("\n\t'l': Toggle Lighting on or off");
     printf("\n\t'arrow keys': Move Camera");
     printf("\n\t'<' Move Lights in -X direction");
@@ -492,7 +500,7 @@ int main(int argc, char** argv) {
     
     //making our window
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(600, 600);
+    glutInitWindowSize(800, 800);
     glutInitWindowPosition(10, 10);
     glutCreateWindow("Terrain Generator");
 

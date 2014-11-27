@@ -26,6 +26,7 @@
  ****************************************/
 const float MAX_HEIGHT = 40;
 float vertexNormals[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE][3];
+float faceNormals[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE][3];
 float maxTerrainHeightValue = 0;
 
 /*****************************************
@@ -142,6 +143,7 @@ void Terrain::generateTerrain() {
     }
 
     calculateVertexNormals();
+    calculateFaceNormals();
 }
 
 /*****************************************
@@ -187,28 +189,44 @@ void Terrain::drawTerrain() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 2);
     
+    //colour is more white w/ more height, green for wireframe
+    float colour;
+    float terrainOffset = terrainSize/2.0;
+
+    //set wireframe mode
+    bool drawingWireframe = false;
+    bool firstIteration = true;
+    if (wireframeMode == SOLID) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    else if (wireframeMode == WIREFRAME) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        drawingWireframe = true;
+    }
+    else if (wireframeMode == BOTH) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        drawingWireframe = true;
+    }
+    
     //iterate over all values in heightmap
+    DrawTerrainLabel:
     for (int x = 0; x < terrainSize-1; x++) {
         for (int z = 0; z < terrainSize-1; z++) {
-            
-            //colour is more white w/ more height, green for wireframe
-            float colour;
-            bool drawingWireframe = false;
-            
+
             //set snow and water materials (it looks dumb with the circle algorithm so we disable it)
-            if (heightMap[x][z] <= 4){// && terrainAlgorithm != CIRCLE) {
+            if (heightMap[x][z] <= 4){
                 float diffuseWater[4] = {0,0,0.8, 1};
                 float ambientWater[4] = {0,0,0.8, 1};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientWater);
                 glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseWater);
             }
-            else if (heightMap[x][z] > 4 && heightMap[x][z] <= 8 ){//&& terrainAlgorithm != CIRCLE) {
+            else if (heightMap[x][z] > 4 && heightMap[x][z] <= 8 ) {
                 float diffuseGrass[4] = {0,0.3,0.2, 1};
                 float ambientGrass[4] = {0, 0.3, 0.2, 1};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientGrass);
                 glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseGrass);
             }
-            else if (heightMap[x][z] >= 21 ){//&& terrainAlgorithm != CIRCLE) {
+            else if (heightMap[x][z] >= 21 ) {
                 float diffuseSnow[4] = {1,1,1, 1};
                 float ambientSnow[4] = {1,1,1, 1};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientSnow);
@@ -221,57 +239,41 @@ void Terrain::drawTerrain() {
                 glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseDefault);
             }
 
-            //set polygon mode, make wireframes bright green if no lighting
-            if (wireframeMode == SOLID) {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            }
-            else if (wireframeMode == WIREFRAME) {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                drawingWireframe = true;
-            }
-            else if (wireframeMode == BOTH) {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                drawingWireframe = true;
-            }
+            //draw the quad
+            glBegin(GL_QUADS);
+                colour = (float) heightMap[x][z]/ (float) maxTerrainHeightValue;
+                drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                usingVertexNormals ? glNormal3fv(vertexNormals[x][z]) : glNormal3fv(faceNormals[x][z]);
+                glVertex3f(x-terrainOffset, heightMap[x][z], z-terrainOffset);
             
-            float terrainOffset = terrainSize/2.0;
-            
-            //draw the quad (twice if both is wireframe mode)
-            for (int i = 0; i < 2; i++) {
+                colour = (float) heightMap[x][z+1]/ (float) maxTerrainHeightValue;
+                drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                usingVertexNormals ? glNormal3fv(vertexNormals[x][z+1]) : glNormal3fv(faceNormals[x][z+1]);
+                glVertex3f(x-terrainOffset, heightMap[x][z+1], z+1-terrainOffset);
                 
-                glBegin(GL_QUADS);
-                    colour = (float) heightMap[x][z]/ (float) maxTerrainHeightValue;
-                    drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
-                    glNormal3fv(vertexNormals[x][z]);
-                    glVertex3f(x-terrainOffset, heightMap[x][z], z-terrainOffset);
-                
-                    colour = (float) heightMap[x][z+1]/ (float) maxTerrainHeightValue;
-                    drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
-                    glNormal3fv(vertexNormals[x][z+1]);
-                    glVertex3f(x-terrainOffset, heightMap[x][z+1], z+1-terrainOffset);
-                    
-                    colour = (float) heightMap[x+1][z+1]/ (float) maxTerrainHeightValue;
-                    drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
-                    glNormal3fv(vertexNormals[x+1][z+1]);
-                    glVertex3f(x+1-terrainOffset, heightMap[x+1][z+1], z+1-terrainOffset);
-             
-                    colour = (float) heightMap[x+1][z]/ (float) maxTerrainHeightValue;
-                    drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
-                    glNormal3fv(vertexNormals[x+1][z]);
-                    glVertex3f(x+1-terrainOffset, heightMap[x+1][z], z-terrainOffset);
-                glEnd();
-                
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                drawingWireframe = false;
-                if (wireframeMode != BOTH)
-                    break;
-            }
-            
+                colour = (float) heightMap[x+1][z+1]/ (float) maxTerrainHeightValue;
+                drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                usingVertexNormals ? glNormal3fv(vertexNormals[x+1][z+1]) : glNormal3fv(faceNormals[x+1][z+1]);
+                glVertex3f(x+1-terrainOffset, heightMap[x+1][z+1], z+1-terrainOffset);
+         
+                colour = (float) heightMap[x+1][z]/ (float) maxTerrainHeightValue;
+                drawingWireframe ? glColor3f(0, 0.8, 0.1) : glColor3f(colour, colour, colour);
+                usingVertexNormals ? glNormal3fv(vertexNormals[x+1][z]) : glNormal3fv(faceNormals[x+1][z]);
+                glVertex3f(x+1-terrainOffset, heightMap[x+1][z], z-terrainOffset);
+            glEnd();
         }
+    }
+    
+    //draw again if wireframe = both
+    if (wireframeMode == BOTH && firstIteration) {
+        firstIteration = false;
+        drawingWireframe = false;
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        goto DrawTerrainLabel;
     }
 }
 
-/************************************************************** 
+/**************************************************************
 * calculates normals for every vertex in the heightmap.
 * Code was taken from:
 * www.lighthouse3d.com/opengl/terrain/index.php3?normals
@@ -308,6 +310,53 @@ void Terrain::calculateVertexNormals() {
             vertexNormals[x][z][0] = nv[0];
             vertexNormals[x][z][1] = nv[1];
             vertexNormals[x][z][2] = nv[2];
+        }
+    }
+}
+
+/**************************************************************
+ * calculates normals for every FACE in the heightmap. The indice
+ * of the bottom corner (x=0,z=0 for bottom left quad) of each
+ * quad holds the face normal of that quad in the faceNormals array.
+ * www.lighthouse3d.com/opengl/terrain/index.php3?normals was
+ * used as a reference. Their code is for calculating vertex normals
+ * from face normals, we calculated faces by normalizing vertex ones.
+ **************************************************************/
+void Terrain::calculateFaceNormals() {
+    
+    //iterate over all values in heightmap except right most
+    //and topmost vertices (since bottom left holds faceNormal)
+    for (int x = 0; x < terrainSize-1; x++) {
+        for (int z = 0; z < terrainSize-1; z++) {
+            
+            //x, z
+            float v1[3];
+            v1[0] = vertexNormals[x][z][0];
+            v1[1] = vertexNormals[x][z][1];
+            v1[2] = vertexNormals[x][z][2];
+            
+            //x+1, z
+            float v2[3];
+            v2[0] = vertexNormals[x+1][z][0];
+            v2[1] = vertexNormals[x+1][z][1];
+            v2[2] = vertexNormals[x+1][z][2];
+            
+            //x+1, z+1
+            float v3[3];
+            v3[0] = vertexNormals[x+1][z+1][0];
+            v3[1] = vertexNormals[x+1][z+1][1];
+            v3[2] = vertexNormals[x+1][z+1][2];
+            
+            //x, z+1
+            float v4[3];
+            v4[0] = vertexNormals[x][z+1][0];
+            v4[1] = vertexNormals[x][z+1][1];
+            v4[2] = vertexNormals[x][z+1][2];
+            
+            //normalize the 3 surrounding vertex normals
+            faceNormals[x][z][0] = (v1[0]+v2[0]+v3[0]+v4[0])/4.0;
+            faceNormals[x][z][1] = (v1[1]+v2[1]+v3[1]+v4[1])/4.0;
+            faceNormals[x][z][2] = (v1[2]+v2[2]+v3[2]+v4[2])/4.0;
         }
     }
 }

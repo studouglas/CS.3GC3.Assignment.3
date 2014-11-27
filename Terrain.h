@@ -32,4 +32,5 @@ class Terrain {
         TerrainAlgorithm terrainAlgorithm = FAULT;
         float** heightMap;
         int terrainSize = 100;
+        bool usingVertexNormals = true;
 };
