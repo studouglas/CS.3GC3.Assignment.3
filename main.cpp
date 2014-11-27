@@ -265,10 +265,10 @@ void keyboard(unsigned char key, int x, int y) {
             
         //move camera
         case '[':
-			camPos[2] -= (2 * terrain.terrainSize) / terrain.terrainSize;
+			camPos[2] -= 2;
             break;
         case ']':
-			camPos[2] += (2 * terrain.terrainSize) / terrain.terrainSize;
+			camPos[2] += 2;
             break;
 
         //change algorithms
@@ -312,23 +312,23 @@ void keyboard(unsigned char key, int x, int y) {
         //rotate lights in circle
         case ',':
         case '<':
-            light0Pos[0] -= (2*terrain.terrainSize)/terrain.terrainSize;
-			light1Pos[0] -= (2 * terrain.terrainSize) / terrain.terrainSize;
+			light0Pos[0] -= 2;
+			light1Pos[0] -= 2;
             break;
         case '.':
         case '>':
-			light0Pos[2] -= (2 * terrain.terrainSize) / terrain.terrainSize;
-			light1Pos[2] -= (2 * terrain.terrainSize) / terrain.terrainSize;
+			light0Pos[2] -= 2;
+			light1Pos[2] -= 2;
             break;
         case '/':
         case '?':
-			light0Pos[0] += (2 * terrain.terrainSize) / terrain.terrainSize;
-			light1Pos[0] += (2 * terrain.terrainSize) / terrain.terrainSize;
+			light0Pos[0] += 2;
+			light1Pos[0] += 2;
             break;
         case ';':
         case ':':
-			light0Pos[2] += (2 * terrain.terrainSize) / terrain.terrainSize;
-			light1Pos[2] += (2 * terrain.terrainSize) / terrain.terrainSize;
+			light0Pos[2] += 2;
+			light1Pos[2] += 2;
             break;
         
         //pause
@@ -362,19 +362,19 @@ void special(int key, int x, int y) {
     //move camera w/ arrow keys
     switch(key) {
         case GLUT_KEY_LEFT:
-			camPos[0] -= (2 * terrain.terrainSize) / terrain.terrainSize;
+			camPos[0] -= 2;
             break;
             
         case GLUT_KEY_RIGHT:
-			camPos[0] += (2 * terrain.terrainSize) / terrain.terrainSize;
+			camPos[0] += 2;
             break;
             
         case GLUT_KEY_UP:
-			camPos[1] += (2 * terrain.terrainSize) / terrain.terrainSize;
+			camPos[1] += 2;
             break;
             
         case GLUT_KEY_DOWN:
-			camPos[1] -= (2 * terrain.terrainSize) / terrain.terrainSize;
+			camPos[1] -= 2;
             break;
     }
     glutPostRedisplay();
