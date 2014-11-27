@@ -433,6 +433,7 @@ void init() {
     printf("\n\tMultiple Algorithms: 2 Algorithms for generating the terrian are included (press 1 and 2 to switch).");
     printf("\n\tTerrain Colours: Depending on the height, terrain is blue (water), brown (land), green (grass), or white (snow).");
     printf("\n\tSmooth Terrain: We have implemented a smoothing algorithm for the FAULT line terrain that makes it less jagged.");
+	printf("\nNote: Light movement is more noticable on smaller terrains, i.e. keep direction buttons pressed for longer to see changes on large terrains.");
 
     //initialize terrain
     terrain = Terrain(terrainSize);
