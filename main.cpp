@@ -315,7 +315,7 @@ void keyboard(unsigned char key, int x, int y) {
             terrain.changeWireframeMode();
             break;
             
-        //rotate lights in circle
+        //move lights
         case ',':
         case '<':
 			light0Pos[0] -= 2;
@@ -416,15 +416,9 @@ void reshapeFunc(int w, int h) {
 void init() {
     
     //get terrain size
-<<<<<<< HEAD
-    int terrainSize = 300;
-    printf("Enter terrain size (min 50, max 300):\n");
-//    scanf("%d",&terrainSize);
-=======
     int terrainSize = 100;
     printf("Enter terrain size (recommended between 50 and 300 for best output):\n");
     scanf("%d",&terrainSize);
->>>>>>> FETCH_HEAD
 
     //introduction console text
     printf("\nWelcome to CS 3GC3 Assignment 3 - Terrain Generator!");
@@ -453,6 +447,7 @@ void init() {
     //initialize terrain
     terrain = Terrain(terrainSize);
     
+    //start character in random direction
     characterXDir = ((double) rand() / RAND_MAX)/2.0;
     characterZDir = ((double) rand() / RAND_MAX)/2.0;
     
@@ -472,7 +467,7 @@ void init() {
     camPos[2] = -terrain.terrainSize + terrain.terrainSize/4;
     
     //set backrgound to dark gray
-    glClearColor(0.25, 0.25, 0.25, 1);
+    glClearColor(0.2, 0.2, 0.2, 1);
 
     //turn on lighting & back-face culling
     glEnable(GL_CULL_FACE);
