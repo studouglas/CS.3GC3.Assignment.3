@@ -265,10 +265,10 @@ void keyboard(unsigned char key, int x, int y) {
             
         //move camera
         case '[':
-            camPos[2] -= 1;
+			camPos[2] -= (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
         case ']':
-            camPos[2] += 1;
+			camPos[2] += (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
 
         //change algorithms
@@ -312,23 +312,23 @@ void keyboard(unsigned char key, int x, int y) {
         //rotate lights in circle
         case ',':
         case '<':
-            light0Pos[0] -= 1;
-            light1Pos[0] -= 1;
+            light0Pos[0] -= (2*terrain.terrainSize)/terrain.terrainSize;
+			light1Pos[0] -= (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
         case '.':
         case '>':
-            light0Pos[2] -= 1;
-            light1Pos[2] -= 1;
+			light0Pos[2] -= (2 * terrain.terrainSize) / terrain.terrainSize;
+			light1Pos[2] -= (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
         case '/':
         case '?':
-            light0Pos[0] += 1;
-            light1Pos[0] += 1;
+			light0Pos[0] += (2 * terrain.terrainSize) / terrain.terrainSize;
+			light1Pos[0] += (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
         case ';':
         case ':':
-            light0Pos[2] += 1;
-            light1Pos[2] += 1;
+			light0Pos[2] += (2 * terrain.terrainSize) / terrain.terrainSize;
+			light1Pos[2] += (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
         
         //pause
@@ -362,19 +362,19 @@ void special(int key, int x, int y) {
     //move camera w/ arrow keys
     switch(key) {
         case GLUT_KEY_LEFT:
-            camPos[0] -= 1;
+			camPos[0] -= (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
             
         case GLUT_KEY_RIGHT:
-            camPos[0] += 1;
+			camPos[0] += (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
             
         case GLUT_KEY_UP:
-            camPos[1] += 1;
+			camPos[1] += (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
             
         case GLUT_KEY_DOWN:
-            camPos[1] -= 1;
+			camPos[1] -= (2 * terrain.terrainSize) / terrain.terrainSize;
             break;
     }
     glutPostRedisplay();
@@ -410,7 +410,7 @@ void init() {
     
     //get terrain size
     int terrainSize = 100;
-    printf("Enter terrain size (min 50, max 300):\n");
+    printf("Enter terrain size (recommended between 50 and 300 for best output):\n");
     scanf("%d",&terrainSize);
 
     //introduction console text
@@ -422,7 +422,9 @@ void init() {
     printf("\n\t'w': Toggle Wireframe Modes");
     printf("\n\t's': Toggle Gouraud or Flat shading");
     printf("\n\t'l': Toggle Lighting on or off");
-    printf("\n\t'arrow keys': Move Camera");
+	printf("\n\t'Up and Down Arrow Keys': Move Camera Up and Down");
+    printf("\n\t'Left and Right Arrow Keys': Move Camera on Z axis");
+	printf("\n\t'[' and ']': Move Camera on X axis");
     printf("\n\t'<' Move Lights in -X direction");
     printf("\n\t'/' Move Lights in +X direction");
     printf("\n\t'.' Move Lights in -Z direction");
@@ -433,7 +435,6 @@ void init() {
     printf("\n\tMultiple Algorithms: 2 Algorithms for generating the terrian are included (press 1 and 2 to switch).");
     printf("\n\tTerrain Colours: Depending on the height, terrain is blue (water), brown (land), green (grass), or white (snow).");
     printf("\n\tSmooth Terrain: We have implemented a smoothing algorithm for the FAULT line terrain that makes it less jagged.");
-	printf("\nNote: Light movement is more noticable on smaller terrains, i.e. keep direction buttons pressed for longer to see changes on large terrains.");
 
     //initialize terrain
     terrain = Terrain(terrainSize);
