@@ -30,6 +30,6 @@ class Terrain {
         ****************************************/
         WireframeMode wireframeMode = SOLID;
         TerrainAlgorithm terrainAlgorithm = FAULT;
-        float heightMap[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE];
+        float** heightMap;
         int terrainSize = 100;
 };

@@ -26,7 +26,6 @@
  ****************************************/
 const float MAX_HEIGHT = 40;
 float vertexNormals[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE][3];
-float faceNormals[MAX_TERRAIN_SIZE][MAX_TERRAIN_SIZE][3];
 float maxTerrainHeightValue = 0;
 
 /*****************************************
@@ -42,6 +41,11 @@ Terrain::Terrain(int size) {
     else
         terrainSize = size;
     
+    //initialize heightmap 2D array
+    heightMap = new float*[terrainSize];
+    for (int i = 0; i < terrainSize; ++i)
+        heightMap[i] = new float[terrainSize];
+    
     //make the terrain
     generateTerrain();
 }
@@ -54,8 +58,8 @@ void Terrain::generateTerrain() {
 
     //reset heightmap
     maxTerrainHeightValue = 0;
-    for (int x = 0; x < MAX_TERRAIN_SIZE; x++) {
-        for (int z = 0; z < MAX_TERRAIN_SIZE; z++) {
+    for (int x = 0; x < terrainSize; x++) {
+        for (int z = 0; z < terrainSize; z++) {
             heightMap[x][z] = 10;
         }
     }
@@ -136,9 +140,8 @@ void Terrain::generateTerrain() {
         }
         smoothTerrain(terrainSize/600.0+0.1);
     }
-    
+
     calculateVertexNormals();
-    calculateFaceNormals();
 }
 
 /*****************************************
@@ -278,8 +281,8 @@ void Terrain::drawTerrain() {
 void Terrain::calculateVertexNormals() {
     
     //calculate normals
-    for (int x = 0; x < terrainSize; x++) {
-        for (int z = 0; z < terrainSize; z++) {
+    for (int x = 0; x < terrainSize-1; x++) {
+        for (int z = 0; z < terrainSize-1; z++) {
             
             //x, z
             float t1[3];
@@ -306,53 +309,6 @@ void Terrain::calculateVertexNormals() {
             vertexNormals[x][z][0] = nv[0];
             vertexNormals[x][z][1] = nv[1];
             vertexNormals[x][z][2] = nv[2];
-        }
-    }
-}
-
-/**************************************************************
-* calculates normals for every FACE in the heightmap. The indice
-* of the bottom corner (x=0,z=0 for bottom left quad) of each
-* quad holds the face normal of that quad in the faceNormals array.
-* www.lighthouse3d.com/opengl/terrain/index.php3?normals was
-* used as a reference. Their code is for calculating vertex normals
-* from face normals, we calculated faces by normalizing vertex ones.
-**************************************************************/
-void Terrain::calculateFaceNormals() {
-
-    //iterate over all values in heightmap except right most
-    //and topmost vertices (since bottom left holds faceNormal)
-    for (int x = 0; x < terrainSize-1; x++) {
-        for (int z = 0; z < terrainSize-1; z++) {
-            
-            //x, z
-            float v1[3];
-            v1[0] = vertexNormals[x][z][0];
-            v1[1] = vertexNormals[x][z][1];
-            v1[2] = vertexNormals[x][z][2];
-            
-            //x+1, z
-            float v2[3];
-            v2[0] = vertexNormals[x+1][z][0];
-            v2[1] = vertexNormals[x+1][z][1];
-            v2[2] = vertexNormals[x+1][z][2];
-            
-            //x+1, z+1
-            float v3[3];
-            v3[0] = vertexNormals[x+1][z+1][0];
-            v3[1] = vertexNormals[x+1][z+1][1];
-            v3[2] = vertexNormals[x+1][z+1][2];
-
-            //x, z+1
-            float v4[3];
-            v4[0] = vertexNormals[x][z+1][0];
-            v4[1] = vertexNormals[x][z+1][1];
-            v4[2] = vertexNormals[x][z+1][2];
-            
-            //normalize the 3 surrounding vertex normals
-            faceNormals[x][z][0] = (v1[0]+v2[0]+v3[0]+v4[0])/4.0;
-            faceNormals[x][z][1] = (v1[1]+v2[1]+v3[1]+v4[1])/4.0;
-            faceNormals[x][z][2] = (v1[2]+v2[2]+v3[2]+v4[2])/4.0;
         }
     }
 }
