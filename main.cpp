@@ -265,10 +265,10 @@ void keyboard(unsigned char key, int x, int y) {
             
         //move camera
         case '[':
-            camPos[2] -= 1;
+			camPos[2] -= 2;
             break;
         case ']':
-            camPos[2] += 1;
+			camPos[2] += 2;
             break;
 
         //change algorithms
@@ -318,23 +318,23 @@ void keyboard(unsigned char key, int x, int y) {
         //rotate lights in circle
         case ',':
         case '<':
-            light0Pos[0] -= 1;
-            light1Pos[0] -= 1;
+			light0Pos[0] -= 2;
+			light1Pos[0] -= 2;
             break;
         case '.':
         case '>':
-            light0Pos[2] -= 1;
-            light1Pos[2] -= 1;
+			light0Pos[2] -= 2;
+			light1Pos[2] -= 2;
             break;
         case '/':
         case '?':
-            light0Pos[0] += 1;
-            light1Pos[0] += 1;
+			light0Pos[0] += 2;
+			light1Pos[0] += 2;
             break;
         case ';':
         case ':':
-            light0Pos[2] += 1;
-            light1Pos[2] += 1;
+			light0Pos[2] += 2;
+			light1Pos[2] += 2;
             break;
         
         //pause
@@ -369,19 +369,19 @@ void special(int key, int x, int y) {
     //move camera w/ arrow keys
     switch(key) {
         case GLUT_KEY_LEFT:
-            camPos[0] -= 1;
+			camPos[0] -= 2;
             break;
             
         case GLUT_KEY_RIGHT:
-            camPos[0] += 1;
+			camPos[0] += 2;
             break;
             
         case GLUT_KEY_UP:
-            camPos[1] += 1;
+			camPos[1] += 2;
             break;
             
         case GLUT_KEY_DOWN:
-            camPos[1] -= 1;
+			camPos[1] -= 2;
             break;
     }
     glutPostRedisplay();
@@ -416,9 +416,15 @@ void reshapeFunc(int w, int h) {
 void init() {
     
     //get terrain size
+<<<<<<< HEAD
     int terrainSize = 300;
     printf("Enter terrain size (min 50, max 300):\n");
 //    scanf("%d",&terrainSize);
+=======
+    int terrainSize = 100;
+    printf("Enter terrain size (recommended between 50 and 300 for best output):\n");
+    scanf("%d",&terrainSize);
+>>>>>>> FETCH_HEAD
 
     //introduction console text
     printf("\nWelcome to CS 3GC3 Assignment 3 - Terrain Generator!");
@@ -430,7 +436,9 @@ void init() {
     printf("\n\t's': Toggle Gouraud or Flat shading");
     printf("\n\t'n': Toggle Vertex or Face Normals");
     printf("\n\t'l': Toggle Lighting on or off");
-    printf("\n\t'arrow keys': Move Camera");
+	printf("\n\t'Up and Down Arrow Keys': Move Camera Up and Down");
+    printf("\n\t'Left and Right Arrow Keys': Move Camera on Z axis");
+	printf("\n\t'[' and ']': Move Camera on X axis");
     printf("\n\t'<' Move Lights in -X direction");
     printf("\n\t'/' Move Lights in +X direction");
     printf("\n\t'.' Move Lights in -Z direction");
