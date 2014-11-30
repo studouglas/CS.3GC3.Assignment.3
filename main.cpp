@@ -182,6 +182,7 @@ void drawSnowman() {
     
     //body is white
     glPushMatrix();
+
     glTranslatef(characterPos[0], characterPos[1], characterPos[2]);
     glutSolidSphere(1, 16, 16); //body
     
