@@ -100,7 +100,7 @@ void drawText() {
     #ifdef __APPLE__
         sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),terrain.getAlgorithm(), (terrain.usingVertexNormals ? "VERTEX" : "FACE"),terrain.terrainSize,terrain.terrainSize);
     #else
-	sprintf(outputStr, formatStr, (lighting ? "ON" : "OFF"), (gouraudShading ? "GOURAUD" : "FLAT"), terrain.getWireframeMode(), terrain.getAlgorithm(), (terrain.usingVertexNormals ? "VERTEX" : "FACE"), terrain.terrainSize, terrain.terrainSize);
+		sprintf(outputStr, formatStr, (lighting ? "ON" : "OFF"), (gouraudShading ? "GOURAUD" : "FLAT"), terrain.getWireframeMode(), terrain.getAlgorithm(), (terrain.usingVertexNormals ? "VERTEX" : "FACE"), terrain.terrainSize, terrain.terrainSize);
     #endif
 
     //display string
