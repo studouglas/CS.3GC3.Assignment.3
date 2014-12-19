@@ -75,6 +75,7 @@ void display(void) {
 * draws current states of user-modifiable
 * variables in text in bottom left
 ****************************************/
+
 void drawText() {
     
     //clear matrix
@@ -93,13 +94,13 @@ void drawText() {
     
     //set up string to print
     char formatStr[] = "Lighting : %s | Shading: %s | Wireframe: %s | Algorithm: %s | Normals: %s | Size: %d x %d";
-    char outputStr[100];
+    char outputStr[110];
     
     //for some reason sprintf requires the _s in windows
     #ifdef __APPLE__
         sprintf(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),terrain.getAlgorithm(), (terrain.usingVertexNormals ? "VERTEX" : "FACE"),terrain.terrainSize,terrain.terrainSize);
     #else
-        sprintf_s(outputStr, formatStr,(lighting ? "ON" : "OFF"),(gouraudShading ? "GOURAUD" : "FLAT"),terrain.getWireframeMode(),terrain.getAlgorithm(),terrain,(terrain.usingVertexNormals ? "VERTEX" : "FACE"),terrain.terrainSize,terrain.terrainSize);
+	sprintf(outputStr, formatStr, (lighting ? "ON" : "OFF"), (gouraudShading ? "GOURAUD" : "FLAT"), terrain.getWireframeMode(), terrain.getAlgorithm(), (terrain.usingVertexNormals ? "VERTEX" : "FACE"), terrain.terrainSize, terrain.terrainSize);
     #endif
 
     //display string
